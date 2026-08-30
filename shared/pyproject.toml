@@ -1,0 +1,17 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "shared"
+version = "0.1.0"
+description = "Shared Pydantic contracts, enums, clients, and utils for AI Co-Founder"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "pydantic>=2.0.0",
+    "typing-extensions>=4.0.0"
+]
+
+[tool.setuptools.packages.find]
+where = ["."]

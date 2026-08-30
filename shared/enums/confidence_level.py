@@ -1,0 +1,7 @@
+from enum import Enum
+
+class ValidationStatus(str, Enum):
+    VALID = "VALID"
+    LOW_CONFIDENCE = "LOW_CONFIDENCE"
+    RESEARCH_REQUIRED = "RESEARCH_REQUIRED"
+    REANALYSIS_REQUIRED = "REANALYSIS_REQUIRED"
