@@ -24,12 +24,7 @@ class MarketingClient:
         revenue: RevenueEstimationOutput,
         founder: Optional[FounderInput] = None
     ) -> MarketingPlanOutput:
-        import sys
-        from pathlib import Path
-        svc_path = str(Path(__file__).resolve().parent.parent.parent / "services" / "marketing-output")
-        if svc_path not in sys.path:
-            sys.path.insert(0, svc_path)
-        from app.interface import run_marketing_plan
+        from services.marketing_output.app.interface import run_marketing_plan
         return run_marketing_plan(
             idea=idea,
             market=market,
@@ -39,11 +34,6 @@ class MarketingClient:
         )
 
     def compile_startup_roadmap(self, state: VentureState) -> StartupRoadmap:
-        import sys
-        from pathlib import Path
-        svc_path = str(Path(__file__).resolve().parent.parent.parent / "services" / "marketing-output")
-        if svc_path not in sys.path:
-            sys.path.insert(0, svc_path)
-        from app.interface import run_roadmap_synthesis
+        from services.marketing_output.app.interface import run_roadmap_synthesis
         return run_roadmap_synthesis(state=state)
 

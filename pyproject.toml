@@ -22,4 +22,4 @@ packages = ["shared", "database", "evaluation"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests", "services/finance/tests"]
-pythonpath = [".", "services/orchestrator", "services/finance", "services/research", "services/business-intelligence", "services/marketing-output"]
+pythonpath = [".", "services/orchestrator", "services/finance", "services/research", "services/business_intelligence", "services/marketing_output"]
