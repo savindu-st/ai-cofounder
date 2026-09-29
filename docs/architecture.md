@@ -42,7 +42,7 @@ The **AI Co-Founder Platform** is an intelligent, multi-agent orchestration syst
 ### 2.1 Monolithic LangGraph Runtime Topology
 The platform operates as a **LangGraph-Native Monolith**. Rather than deploying 5 microservices communicating over HTTP/gRPC (which introduces distributed transaction failures, serialization latency, and complex deployment coordination for an academic team), the Orchestrator hosts the complete LangGraph state machine in a single FastAPI process. 
 
-Domain directories (`services/business-intelligence`, `services/research`, `services/finance`, `services/marketing-output`) function as in-process Python modules. Cross-domain interactions occur strictly through the shared [`VentureState`](file:///home/savindust/Documents/projects/ai-co-founder/ai-cofounder/shared/contracts/venture_state.py) contract.
+Domain directories (`services/business_intelligence`, `services/research`, `services/finance`, `services/marketing_output`) function as in-process Python modules. Cross-domain interactions occur strictly through the shared [`VentureState`](file:///home/savindust/Documents/projects/ai-co-founder/ai-cofounder/shared/contracts/venture_state.py) contract.
 
 ```mermaid
 graph TD
@@ -237,15 +237,15 @@ Each agent domain is encapsulated in its respective `services/` directory and ex
 
 ```
 services/
-  business-intelligence/   --> Idea Analysis Agent & Business Model (RAG) Agent
+  business_intelligence/   --> Idea Analysis Agent & Business Model (RAG) Agent
   research/                --> Market Research Agent & Critic / Evidence Validation Agent
   finance/                 --> Revenue Parameter Agent & Deterministic Calculation Engine
-  marketing-output/        --> Marketing / GTM Agent & Startup Roadmap Synthesis Agent
+  marketing_output/        --> Marketing / GTM Agent & Startup Roadmap Synthesis Agent
   orchestrator/            --> LangGraph State Machine, API Gateway & Event Streamer
 ```
 
 ### 4.1 Idea Analysis Agent
-* **Domain Service**: `services/business-intelligence` (`services.business_intelligence.app.interface:run_idea_analysis`)
+* **Domain Service**: `services/business_intelligence` (`services.business_intelligence.app.interface:run_idea_analysis`)
 * **Input Contract**: [`FounderInput`](file:///home/savindust/Documents/projects/ai-co-founder/ai-cofounder/shared/contracts/idea.py) (`idea_description`, `target_industry`, `target_audience`, `problem_statement`, `value_proposition`, `geographical_focus`, `budget_range`)
 * **Output Contract**: [`IdeaAnalysisOutput`](file:///home/savindust/Documents/projects/ai-co-founder/ai-cofounder/shared/contracts/idea.py)
 * **Responsibilities**:
@@ -279,7 +279,7 @@ services/
   * Emits `status: ValidationStatus` (`VALID`, `LOW_CONFIDENCE`, `RESEARCH_REQUIRED`, `REANALYSIS_REQUIRED`).
 
 ### 4.4 Business Model Agent (RAG-Powered)
-* **Domain Service**: `services/business-intelligence` (`services.business_intelligence.app.interface:run_business_model`)
+* **Domain Service**: `services/business_intelligence` (`services.business_intelligence.app.interface:run_business_model`)
 * **Input Contract**: `IdeaAnalysisOutput`, `MarketResearchOutput`
 * **Output Contract**: [`BusinessModelOutput`](file:///home/savindust/Documents/projects/ai-co-founder/ai-cofounder/shared/contracts/business_model.py)
 * **Knowledge Retrieval (RAG)**: Retrieves relevant sections from Osterwalder's Business Model Canvas, Lean Canvas guidelines, and vertical startup case studies stored in ChromaDB.
@@ -297,7 +297,7 @@ services/
   2. *Phase 2 (Deterministic Math Engine)*: Pure Python and NumPy calculate month-by-month financial forecasts across Conservative, Moderate, and Optimistic scenarios. Zero LLM involvement in math calculations.
 
 ### 4.6 Marketing & Go-To-Market (GTM) Agent
-* **Domain Service**: `services/marketing-output` (`services.marketing-output.app.interface:run_marketing_plan`)
+* **Domain Service**: `services/marketing_output` (`services.marketing_output.app.interface:run_marketing_plan`)
 * **Input Contract**: `IdeaAnalysisOutput`, `MarketResearchOutput`, `BusinessModelOutput`, `RevenueEstimationOutput`
 * **Output Contract**: [`MarketingPlanOutput`](file:///home/savindust/Documents/projects/ai-co-founder/ai-cofounder/shared/contracts/marketing.py)
 * **Responsibilities**:
@@ -306,7 +306,7 @@ services/
   * Outlines a sequenced 90-day launch roadmap with measurable weekly KPIs.
 
 ### 4.7 Startup Roadmap Synthesis Agent
-* **Domain Service**: `services/marketing-output` (`services.marketing-output.app.interface:run_roadmap_synthesis`)
+* **Domain Service**: `services/marketing_output` (`services.marketing_output.app.interface:run_roadmap_synthesis`)
 * **Input Contract**: Full aggregated `VentureState`
 * **Output Contract**: [`StartupRoadmap`](file:///home/savindust/Documents/projects/ai-co-founder/ai-cofounder/shared/contracts/roadmap.py)
 * **Responsibilities**:
@@ -361,7 +361,7 @@ graph TD
 ### 5.2 Idempotent Startup Seeding
 To eliminate manual setup friction across team members and CI pipelines:
 * In `services/orchestrator/app/main.py`, the FastAPI `lifespan` handler checks ChromaDB collection cardinality on boot.
-* If the collection contains 0 documents, it automatically triggers [`seed_vector_store.py`](file:///home/savindust/Documents/projects/ai-co-founder/ai-cofounder/services/business-intelligence/app/rag/seed_vector_store.py) against committed fixture files in `services/business-intelligence/data/seed/`.
+* If the collection contains 0 documents, it automatically triggers [`seed_vector_store.py`](file:///home/savindust/Documents/projects/ai-co-founder/ai-cofounder/services/business_intelligence/app/rag/seed_vector_store.py) against committed fixture files in `services/business_intelligence/data/seed/`.
 * Persistent storage is maintained via the host volume mount `./data/chroma:/data/chroma`.
 
 ---
@@ -851,10 +851,10 @@ To support concurrent engineering across 5 team members without merge friction, 
 graph TD
     subgraph Team_Mapping ["QuadNova Team Domain Ownership"]
         Member1["Member 1: Orchestrator & LangGraph Engine<br/>• services/orchestrator/<br/>• shared/contracts/venture_state.py"]
-        Member2["Member 2: Business Intelligence & RAG<br/>• services/business-intelligence/<br/>• ChromaDB seeding & BMC Agent"]
+        Member2["Member 2: Business Intelligence & RAG<br/>• services/business_intelligence/<br/>• ChromaDB seeding & BMC Agent"]
         Member3["Member 3: Market Research & Critic<br/>• services/research/<br/>• Tavily tool, scraping & Critic rubric"]
         Member4["Member 4: Financial Calculation Engine<br/>• services/finance/<br/>• Deterministic calculator & boundary checks"]
-        Member5["Member 5: Marketing & Output Generation<br/>• services/marketing-output/<br/>• GTM strategy, ReportLab PDF & DOCX export"]
+        Member5["Member 5: Marketing & Output Generation<br/>• services/marketing_output/<br/>• GTM strategy, ReportLab PDF & DOCX export"]
     end
 
     subgraph Boundaries ["Strict Boundary Rules"]
@@ -870,10 +870,10 @@ graph TD
 | Domain Directory | Team Responsibility | Primary Entrypoint | Isolated Unit Test Path |
 | :--- | :--- | :--- | :--- |
 | [`services/orchestrator`](file:///home/savindust/Documents/projects/ai-co-founder/ai-cofounder/services/orchestrator) | Orchestration, LangGraph StateGraph, API, SSE Stream | `app/main.py` | `tests/integration/` |
-| [`services/business-intelligence`](file:///home/savindust/Documents/projects/ai-co-founder/ai-cofounder/services/business-intelligence) | Idea Analysis, ChromaDB Seeding, BMC Agent (RAG) | `app/interface.py` | `services/business-intelligence/tests/` |
+| [`services/business_intelligence`](file:///home/savindust/Documents/projects/ai-co-founder/ai-cofounder/services/business_intelligence) | Idea Analysis, ChromaDB Seeding, BMC Agent (RAG) | `app/interface.py` | `services/business_intelligence/tests/` |
 | [`services/research`](file:///home/savindust/Documents/projects/ai-co-founder/ai-cofounder/services/research) | Market Research, Tavily Tooling, Critic Validation | `app/interface.py` | `services/research/tests/` |
 | [`services/finance`](file:///home/savindust/Documents/projects/ai-co-founder/ai-cofounder/services/finance) | Parameter Extraction, Financial Calculator, Scenarios | `app/interface.py` | `services/finance/tests/` |
-| [`services/marketing-output`](file:///home/savindust/Documents/projects/ai-co-founder/ai-cofounder/services/marketing-output) | GTM Strategy, Roadmap Synthesis, PDF/DOCX Exporters | `app/interface.py` | `services/marketing-output/tests/` |
+| [`services/marketing_output`](file:///home/savindust/Documents/projects/ai-co-founder/ai-cofounder/services/marketing_output) | GTM Strategy, Roadmap Synthesis, PDF/DOCX Exporters | `app/interface.py` | `services/marketing_output/tests/` |
 | [`shared/contracts`](file:///home/savindust/Documents/projects/ai-co-founder/ai-cofounder/shared/contracts) | Shared Pydantic v2 data models (immutable contract) | N/A | `tests/contracts/` |
 | [`frontend`](file:///home/savindust/Documents/projects/ai-co-founder/ai-cofounder/frontend) | Next.js 14 Dashboard, SSE Hooks, Interactive Canvas | `src/app/page.tsx` | `npm test` |
 

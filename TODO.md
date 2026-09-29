@@ -34,17 +34,17 @@
 
 These issues currently impede imports, clean builds, and test runs.
 
-- [ ] **0.1 Fix Python Module Directory Names & Git Tracking**
+- [x] **0.1 Fix Python Module Directory Names & Git Tracking**
   - **Issue:** Hyphenated folder names (`services/business-intelligence`, `services/marketing-output`) prevent clean Python imports. They have been renamed locally to snake_case (`services/business_intelligence`, `services/marketing_output`), but git has unstaged renames/deletions.
   - **Task:** Commit directory rename in git cleanly (`git add -A` and record clean file moves).
   - **Files:** [`services/business_intelligence/`](file:///home/savindust/Documents/projects/ai-co-founder/ai-cofounder/services/business_intelligence), [`services/marketing_output/`](file:///home/savindust/Documents/projects/ai-co-founder/ai-cofounder/services/marketing_output).
-- [ ] **0.2 Fix Pytest Module Collection Error**
+- [x] **0.2 Fix Pytest Module Collection Error**
   - **Issue:** Running `pytest` across all services fails with `ModuleNotFoundError: No module named 'tests.test_marketing_agent'`.
   - **Task:** Fix module path resolution in [`pyproject.toml`](file:///home/savindust/Documents/projects/ai-co-founder/ai-cofounder/pyproject.toml) and ensure each `tests/` directory has proper namespace packaging.
   - **Acceptance Criteria:** `pytest` discovers and runs all tests without import crashes.
-- [ ] **0.3 Update `docker-compose.yml` Service Paths**
+- [x] **0.3 Update `docker-compose.yml` Service Paths**
   - **Task:** Ensure [`docker-compose.yml`](file:///home/savindust/Documents/projects/ai-co-founder/ai-cofounder/docker-compose.yml) build contexts and volume mounts reflect snake_case directories (`services/business_intelligence`, `services/marketing_output`).
-- [ ] **0.4 Recreate Contract Tests**
+- [x] **0.4 Recreate Contract Tests**
   - **Issue:** `tests/contracts/__pycache__/` exists, but [`tests/contracts/test_contracts.py`](file:///home/savindust/Documents/projects/ai-co-founder/ai-cofounder/tests/contracts) source file was removed.
   - **Task:** Implement automated Pydantic v2 schema validation tests for all shared contracts.
 
@@ -57,14 +57,14 @@ These issues currently impede imports, clean builds, and test runs.
 **Shared Dependencies:** [`shared/contracts/venture_state.py`](file:///home/savindust/Documents/projects/ai-co-founder/ai-cofounder/shared/contracts/venture_state.py), [`database/`](file:///home/savindust/Documents/projects/ai-co-founder/ai-cofounder/database)
 
 ### 1. LangGraph State Machine Core
-- [ ] **1.1 Build LangGraph StateGraph Definition**
+- [x] **1.1 Build LangGraph StateGraph Definition**
   - **File:** [`services/orchestrator/app/graph/workflow.py`](file:///home/savindust/Documents/projects/ai-co-founder/ai-cofounder/services/orchestrator/app/graph/workflow.py)
   - **Task:** Implement `build_venture_workflow() -> CompiledGraph` using LangGraph `StateGraph(VentureState)`.
   - **Requirements:**
     - Register all 7 nodes: `idea_analysis`, `market_research`, `critic_validation`, `business_model`, `revenue_estimation`, `marketing_plan`, `roadmap_synthesis`.
     - Register `human_review_node` (pause interrupt node).
     - Attach checkpointer (`MemorySaver` for dev, `PostgresSaver` for production).
-- [ ] **1.2 Implement Graph Node Execution Functions**
+- [x] **1.2 Implement Graph Node Execution Functions**
   - **File:** [`services/orchestrator/app/graph/nodes.py`](file:///home/savindust/Documents/projects/ai-co-founder/ai-cofounder/services/orchestrator/app/graph/nodes.py)
   - **Task:** Implement async node wrappers calling domain interfaces:
     - `idea_analysis_node(state)` $\rightarrow$ calls `services.business_intelligence.app.interface:run_idea_analysis`
@@ -75,7 +75,7 @@ These issues currently impede imports, clean builds, and test runs.
     - `marketing_plan_node(state)` $\rightarrow$ calls `services.marketing_output.app.interface:run_marketing_plan`
     - `roadmap_synthesis_node(state)` $\rightarrow$ calls `services.marketing_output.app.interface:run_roadmap_synthesis`
   - **Requirements:** Update `current_stage`, increment stage-specific timers, publish real-time SSE progress events to Redis on node enter/exit.
-- [ ] **1.3 Implement Conditional Edge Routing Logic**
+- [x] **1.3 Implement Conditional Edge Routing Logic**
   - **Files:** [`services/orchestrator/app/graph/routing.py`](file:///home/savindust/Documents/projects/ai-co-founder/ai-cofounder/services/orchestrator/app/graph/routing.py), [`services/orchestrator/app/graph/edges.py`](file:///home/savindust/Documents/projects/ai-co-founder/ai-cofounder/services/orchestrator/app/graph/edges.py)
   - **Task:** Implement branching functions:
     - `route_after_critic(state)`:
@@ -92,7 +92,7 @@ These issues currently impede imports, clean builds, and test runs.
       - Resume based on founder's chosen action (`PROCEED_ANYWAY`, `OVERRIDE_ASSUMPTIONS`, or `ABORT`).
 
 ### 2. Orchestration, Resilience & Fault Tolerance
-- [ ] **1.4 Implement Workflow Coordinator & Background Runner**
+- [x] **1.4 Implement Workflow Coordinator & Background Runner**
   - **File:** [`services/orchestrator/app/orchestration/coordinator.py`](file:///home/savindust/Documents/projects/ai-co-founder/ai-cofounder/services/orchestrator/app/orchestration/coordinator.py)
   - **Task:** Create background task runner managing graph invocation (`asyncio.create_task` or Celery/background workers), passing thread config `{"configurable": {"thread_id": venture_id}}`.
 - [ ] **1.5 Implement Self-Healing Retry Handler with Provider Fallback**
@@ -104,22 +104,22 @@ These issues currently impede imports, clean builds, and test runs.
 - [ ] **1.7 Implement Exception Sandboxing & Crash Recovery**
   - **File:** [`services/orchestrator/app/orchestration/failure_handler.py`](file:///home/savindust/Documents/projects/ai-co-founder/ai-cofounder/services/orchestrator/app/orchestration/failure_handler.py)
   - **Task:** Node timeout wrapper (`asyncio.wait_for(timeout=120s)`); on server startup, query non-terminal ventures in PostgreSQL and resume from last checkpoint.
-- [ ] **1.8 Implement Human-in-the-Loop Interrupt & Resume Handler**
+- [x] **1.8 Implement Human-in-the-Loop Interrupt & Resume Handler**
   - **File:** [`services/orchestrator/app/orchestration/human_review.py`](file:///home/savindust/Documents/projects/ai-co-founder/ai-cofounder/services/orchestrator/app/orchestration/human_review.py)
   - **Task:** Manage pause state, handle resume actions (`PROCEED_ANYWAY`, `OVERRIDE_ASSUMPTIONS`, `ABORT`), update thread state in LangGraph.
 
 ### 3. API Gateway, Real-Time Streaming & State Hydration
-- [ ] **1.9 Connect REST API to LangGraph Pipeline**
+- [x] **1.9 Connect REST API to LangGraph Pipeline**
   - **File:** [`services/orchestrator/app/api/routes.py`](file:///home/savindust/Documents/projects/ai-co-founder/ai-cofounder/services/orchestrator/app/api/routes.py)
   - **Task:** Update `POST /api/ventures/start` to trigger real background LangGraph execution and persist initial state to PostgreSQL.
   - **Task:** Update `GET /api/ventures/{venture_id}` to hydrate state directly from PostgreSQL / LangGraph checkpointer.
   - **Task:** Update `POST /api/ventures/{venture_id}/review` to unpause the LangGraph thread using `graph.update_state()` and resume execution.
-- [ ] **1.10 Implement Real Redis Pub/Sub Event Streaming**
+- [x] **1.10 Implement Real Redis Pub/Sub Event Streaming**
   - **File:** [`services/orchestrator/app/api/stream.py`](file:///home/savindust/Documents/projects/ai-co-founder/ai-cofounder/services/orchestrator/app/api/stream.py)
   - **Task:** Replace simulated sleep generator with genuine Redis subscriber listening on `venture:{id}:events`. Emit standardized SSE payloads (`STAGE_STARTED`, `STAGE_PROGRESS`, `STAGE_COMPLETED`, `REPLAN_TRIGGERED`, `WARNING`, `HITL_REQUIRED`, `ROADMAP_READY`).
 
 ### 4. Database & State Persistence Implementation
-- [ ] **1.11 Implement SQLAlchemy Database Models**
+- [x] **1.11 Implement SQLAlchemy Database Models**
   - **Directory:** [`database/models/`](file:///home/savindust/Documents/projects/ai-co-founder/ai-cofounder/database/models)
   - **Files:**
     - [`database/models/venture.py`](file:///home/savindust/Documents/projects/ai-co-founder/ai-cofounder/database/models/venture.py): Table `ventures` (id, user_id, title, status, created_at, updated_at).
@@ -128,7 +128,7 @@ These issues currently impede imports, clean builds, and test runs.
     - [`database/models/evidence.py`](file:///home/savindust/Documents/projects/ai-co-founder/ai-cofounder/database/models/evidence.py): Table `evidence` (id, venture_id, claim, source_url, confidence_score).
     - [`database/models/roadmap.py`](file:///home/savindust/Documents/projects/ai-co-founder/ai-cofounder/database/models/roadmap.py): Table `roadmaps` (venture_id, roadmap_json, confidence_score, created_at).
     - [`database/models/user.py`](file:///home/savindust/Documents/projects/ai-co-founder/ai-cofounder/database/models/user.py): Table `users` (id, email, hashed_password, created_at).
-- [ ] **1.12 Implement Checkpointing & State Repository**
+- [x] **1.12 Implement Checkpointing & State Repository**
   - **Files:** [`services/orchestrator/app/state/checkpoint.py`](file:///home/savindust/Documents/projects/ai-co-founder/ai-cofounder/services/orchestrator/app/state/checkpoint.py), [`services/orchestrator/app/state/state_manager.py`](file:///home/savindust/Documents/projects/ai-co-founder/ai-cofounder/services/orchestrator/app/state/state_manager.py)
   - **Task:** Save full `VentureState` JSON at each stage boundary to `venture_states`; implement database transaction commits.
 
@@ -424,10 +424,10 @@ These issues currently impede imports, clean builds, and test runs.
 **Primary Directory:** [`tests/`](file:///home/savindust/Documents/projects/ai-co-founder/ai-cofounder/tests)  
 **Lead Collaborator:** Member 4
 
-- [ ] **T.1 Re-implement Shared Contract Tests**
+- [x] **T.1 Re-implement Shared Contract Tests**
   - **File:** `tests/contracts/test_contracts.py`
   - **Task:** Test validation rules across all Pydantic v2 contracts (`FounderInput`, `IdeaAnalysisOutput`, `MarketResearchOutput`, `CriticValidationOutput`, `BusinessModelOutput`, `RevenueEstimationOutput`, `MarketingPlanOutput`, `StartupRoadmap`, `VentureState`).
-- [ ] **T.2 Implement Happy Path Integration Test (Scenario A)**
+- [x] **T.2 Implement Happy Path Integration Test (Scenario A)**
   - **File:** [`tests/integration/test_happy_path.py`](file:///home/savindust/Documents/projects/ai-co-founder/ai-cofounder/tests/integration/test_happy_path.py)
   - **Task:** Replace dummy `assert True` with full mock execution of LangGraph pipeline asserting transition through all 7 stages to `COMPLETED`.
 - [ ] **T.3 Implement Targeted Re-planning Integration Test (Scenario B)**
