@@ -5,7 +5,11 @@ Formats, validates, and serializes the 12 weekly sprints and Day 1-14 immediate 
 
 from typing import List, Dict, Any
 from shared.contracts.marketing import Milestone
-from app.agents.marketing.schemas import WeeklySprintItem
+try:
+    from services.marketing_output.app.agents.marketing.schemas import WeeklySprintItem
+except ImportError:
+    from app.agents.marketing.schemas import WeeklySprintItem
+
 
 
 class GTMPlanGenerator:

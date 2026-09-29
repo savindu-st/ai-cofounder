@@ -5,7 +5,11 @@ times out, errors, or is not configured.
 """
 
 from typing import Dict, List
-from app.agents.marketing.schemas import VentureArchetype, WeeklySprintItem
+try:
+    from services.marketing_output.app.agents.marketing.schemas import VentureArchetype, WeeklySprintItem
+except ImportError:
+    from app.agents.marketing.schemas import VentureArchetype, WeeklySprintItem
+
 
 
 ARCHETYPE_TEMPLATES: Dict[VentureArchetype, Dict] = {

@@ -3,4 +3,4 @@ app = FastAPI(title="Business Intelligence Service")
 
 @app.get("/health")
 def health():
-    return {"service": "business-intelligence", "status": "healthy"}
+    return {"service": "business_intelligence", "status": "healthy"}

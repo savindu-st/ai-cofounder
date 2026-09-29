@@ -12,12 +12,20 @@ from shared.contracts.business_model import BusinessModelOutput, BusinessModelCa
 from shared.contracts.revenue import RevenueEstimationOutput, FinancialParameters, ProjectionScenario
 from shared.contracts.marketing import MarketingPlanOutput
 
-from app.agents.marketing.schemas import VentureArchetype, TractionChannel
-from app.agents.marketing.archetypes import ArchetypeClassifier
-from app.agents.marketing.channel_selector import BullseyeChannelSelector
-from app.agents.marketing.budget_allocator import DeterministicBudgetAllocator
-from app.agents.marketing.agent import MarketingAgent
-from app.interface import run_marketing_plan
+try:
+    from services.marketing_output.app.agents.marketing.schemas import VentureArchetype, TractionChannel
+    from services.marketing_output.app.agents.marketing.archetypes import ArchetypeClassifier
+    from services.marketing_output.app.agents.marketing.channel_selector import BullseyeChannelSelector
+    from services.marketing_output.app.agents.marketing.budget_allocator import DeterministicBudgetAllocator
+    from services.marketing_output.app.agents.marketing.agent import MarketingAgent
+    from services.marketing_output.app.interface import run_marketing_plan
+except ImportError:
+    from app.agents.marketing.schemas import VentureArchetype, TractionChannel
+    from app.agents.marketing.archetypes import ArchetypeClassifier
+    from app.agents.marketing.channel_selector import BullseyeChannelSelector
+    from app.agents.marketing.budget_allocator import DeterministicBudgetAllocator
+    from app.agents.marketing.agent import MarketingAgent
+    from app.interface import run_marketing_plan
 
 
 @pytest.fixture

@@ -8,7 +8,11 @@ from typing import Optional
 from shared.contracts.idea import IdeaAnalysisOutput, FounderInput
 from shared.contracts.business_model import BusinessModelOutput
 from shared.contracts.revenue import RevenueEstimationOutput
-from app.agents.marketing.schemas import VentureArchetype
+try:
+    from services.marketing_output.app.agents.marketing.schemas import VentureArchetype
+except ImportError:
+    from app.agents.marketing.schemas import VentureArchetype
+
 
 
 class ArchetypeClassifier:

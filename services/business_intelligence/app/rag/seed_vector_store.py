@@ -1,6 +1,6 @@
 """Idempotent ChromaDB Seeder for Startup Frameworks and Case Studies.
 
-Reads markdown documents from services/business-intelligence/data/seed/
+Reads markdown documents from services/business_intelligence/data/seed/
 and indexes them into a persistent ChromaDB collection.
 """
 

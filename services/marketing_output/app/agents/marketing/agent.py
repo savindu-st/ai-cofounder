@@ -12,18 +12,33 @@ from shared.contracts.business_model import BusinessModelOutput
 from shared.contracts.revenue import RevenueEstimationOutput
 from shared.contracts.marketing import MarketingPlanOutput, Milestone
 
-from app.agents.marketing.schemas import (
-    VentureArchetype, TractionChannel, ChannelScore, BullseyeRanking,
-    UnitEconomicsMetrics, BudgetItem
-)
-from app.agents.marketing.archetypes import ArchetypeClassifier
-from app.agents.marketing.channel_selector import BullseyeChannelSelector
-from app.agents.marketing.budget_allocator import DeterministicBudgetAllocator
-from app.agents.marketing.fallback_templates import get_fallback_plan
-from app.agents.marketing.gtm_plan import GTMPlanGenerator
-from app.agents.marketing.prompts import (
-    SYSTEM_MARKETING_PROMPT, build_marketing_user_prompt
-)
+try:
+    from services.marketing_output.app.agents.marketing.schemas import (
+        VentureArchetype, TractionChannel, ChannelScore, BullseyeRanking,
+        UnitEconomicsMetrics, BudgetItem
+    )
+    from services.marketing_output.app.agents.marketing.archetypes import ArchetypeClassifier
+    from services.marketing_output.app.agents.marketing.channel_selector import BullseyeChannelSelector
+    from services.marketing_output.app.agents.marketing.budget_allocator import DeterministicBudgetAllocator
+    from services.marketing_output.app.agents.marketing.fallback_templates import get_fallback_plan
+    from services.marketing_output.app.agents.marketing.gtm_plan import GTMPlanGenerator
+    from services.marketing_output.app.agents.marketing.prompts import (
+        SYSTEM_MARKETING_PROMPT, build_marketing_user_prompt
+    )
+except ImportError:
+    from app.agents.marketing.schemas import (
+        VentureArchetype, TractionChannel, ChannelScore, BullseyeRanking,
+        UnitEconomicsMetrics, BudgetItem
+    )
+    from app.agents.marketing.archetypes import ArchetypeClassifier
+    from app.agents.marketing.channel_selector import BullseyeChannelSelector
+    from app.agents.marketing.budget_allocator import DeterministicBudgetAllocator
+    from app.agents.marketing.fallback_templates import get_fallback_plan
+    from app.agents.marketing.gtm_plan import GTMPlanGenerator
+    from app.agents.marketing.prompts import (
+        SYSTEM_MARKETING_PROMPT, build_marketing_user_prompt
+    )
+
 
 
 class MarketingAgent:

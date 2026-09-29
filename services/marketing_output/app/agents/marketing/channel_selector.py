@@ -8,9 +8,15 @@ and groups them into Inner Circle, Potential, and Long Shots.
 from typing import List, Dict, Optional
 from shared.contracts.idea import IdeaAnalysisOutput, FounderInput
 from shared.contracts.revenue import RevenueEstimationOutput
-from app.agents.marketing.schemas import (
-    VentureArchetype, TractionChannel, ChannelScore, BullseyeRanking
-)
+try:
+    from services.marketing_output.app.agents.marketing.schemas import (
+        VentureArchetype, TractionChannel, ChannelScore, BullseyeRanking
+    )
+except ImportError:
+    from app.agents.marketing.schemas import (
+        VentureArchetype, TractionChannel, ChannelScore, BullseyeRanking
+    )
+
 
 
 # Baseline suitability matrices per Archetype for all 19 channels (0.0 to 1.0)

@@ -6,9 +6,15 @@ dollar budget distribution with invariant enforcement.
 
 from typing import List, Dict, Tuple, Optional
 from shared.contracts.revenue import RevenueEstimationOutput
-from app.agents.marketing.schemas import (
-    VentureArchetype, TractionChannel, UnitEconomicsMetrics, BudgetItem
-)
+try:
+    from services.marketing_output.app.agents.marketing.schemas import (
+        VentureArchetype, TractionChannel, UnitEconomicsMetrics, BudgetItem
+    )
+except ImportError:
+    from app.agents.marketing.schemas import (
+        VentureArchetype, TractionChannel, UnitEconomicsMetrics, BudgetItem
+    )
+
 
 
 class DeterministicBudgetAllocator:

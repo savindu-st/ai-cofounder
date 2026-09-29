@@ -14,12 +14,14 @@ dependencies = [
     "uvicorn>=0.28.0",
     "langgraph>=0.0.26",
     "redis>=5.0.0",
-    "sqlalchemy>=2.0.0"
+    "sqlalchemy>=2.0.0",
+    "asyncpg>=0.29.0"
 ]
 
 [tool.setuptools]
-packages = ["shared", "database", "evaluation"]
+packages = ["shared", "database", "evaluation", "services"]
 
 [tool.pytest.ini_options]
-testpaths = ["tests", "services/finance/tests"]
-pythonpath = [".", "services/orchestrator", "services/finance", "services/research", "services/business_intelligence", "services/marketing_output"]
+testpaths = ["tests", "services"]
+pythonpath = ["."]
+addopts = "-v --import-mode=importlib"

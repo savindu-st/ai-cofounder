@@ -3,4 +3,4 @@ app = FastAPI(title="Marketing & Document Export Service")
 
 @app.get("/health")
 def health():
-    return {"service": "marketing-output", "status": "healthy"}
+    return {"service": "marketing_output", "status": "healthy"}

@@ -14,7 +14,11 @@ from shared.contracts.marketing import MarketingPlanOutput, Milestone
 from shared.contracts.roadmap import StartupRoadmap
 from shared.contracts.venture_state import VentureState
 
-from app.agents.marketing.agent import MarketingAgent
+try:
+    from services.marketing_output.app.agents.marketing.agent import MarketingAgent
+except ImportError:
+    from app.agents.marketing.agent import MarketingAgent
+
 
 
 def run_marketing_plan(
