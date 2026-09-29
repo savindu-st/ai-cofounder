@@ -13,6 +13,9 @@ AI Co-Founder is an autonomous multi-agent AI platform that acts as an on-demand
 - **Revenue Estimation & Financial Engine (Member 4)**: Structured parameter generation paired with a deterministic Python math engine ($SOM \le SAM \le TAM$, unit economics, sensitivity).
 - **Marketing & Roadmap Viewer (Member 5)**: 90-day actionable GTM plan, Next.js frontend UI, and PDF/Word roadmap export.
 
+## 📋 Implementation Roadmap & To-Do List
+Detailed task breakdowns, domain allocations, blockers, and progress tracking can be found in [TODO.md](file:///home/savindust/Documents/projects/ai-co-founder/ai-cofounder/TODO.md).
+
 ## 🚀 Quick Start
 
 ### 1. Dev Hybrid Mode (Recommended for Development)
