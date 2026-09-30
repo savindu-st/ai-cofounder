@@ -6,14 +6,21 @@ and indexes them into a persistent ChromaDB collection.
 
 import os
 import glob
+import logging
 from typing import List, Dict
+from services.business_intelligence.app.rag.vector_store import (
+    ChromaVectorStore,
+    DEFAULT_PERSIST_DIRECTORY,
+    DEFAULT_COLLECTION_NAME,
+)
+
+logger = logging.getLogger(__name__)
 
 SEED_DIR = os.path.join(
     os.path.dirname(os.path.dirname(os.path.dirname(__file__))),
     "data",
     "seed"
 )
-COLLECTION_NAME = "startup_frameworks"
 
 
 def chunk_text(text: str, chunk_size: int = 512, overlap: int = 64) -> List[str]:
@@ -29,30 +36,33 @@ def chunk_text(text: str, chunk_size: int = 512, overlap: int = 64) -> List[str]
     return chunks
 
 
-def seed_chromadb_if_empty(persist_directory: str = "./data/chroma") -> int:
+def seed_chromadb_if_empty(
+    persist_directory: str = DEFAULT_PERSIST_DIRECTORY,
+    collection_name: str = DEFAULT_COLLECTION_NAME,
+    force_reseed: bool = False
+) -> int:
     """Checks collection count; if 0 or uninitialized, seeds documents into ChromaDB.
     Returns total document chunks indexed.
     """
+    store = ChromaVectorStore(
+        persist_directory=persist_directory,
+        collection_name=collection_name
+    )
+
     try:
-        import chromadb
-        from chromadb.config import Settings
-    except ImportError:
-        print("[RAG Seeder] chromadb not installed, skipping vector store seeding.")
+        current_count = store.count()
+    except Exception as e:
+        logger.error(f"[RAG Seeder] Failed to connect to vector store: {e}")
         return 0
 
-    os.makedirs(persist_directory, exist_ok=True)
-    client = chromadb.PersistentClient(path=persist_directory)
-    collection = client.get_or_create_collection(name=COLLECTION_NAME)
+    if current_count > 0 and not force_reseed:
+        logger.info(f"[RAG Seeder] Collection '{collection_name}' already seeded with {current_count} chunks.")
+        return current_count
 
-    count = collection.count()
-    if count > 0:
-        print(f"[RAG Seeder] Collection '{COLLECTION_NAME}' already seeded with {count} chunks.")
-        return count
-
-    print(f"[RAG Seeder] Seeding collection '{COLLECTION_NAME}' from {SEED_DIR}...")
+    logger.info(f"[RAG Seeder] Seeding collection '{collection_name}' from {SEED_DIR}...")
     md_files = glob.glob(os.path.join(SEED_DIR, "*.md"))
     if not md_files:
-        print(f"[RAG Seeder] No markdown files found in {SEED_DIR}.")
+        logger.warning(f"[RAG Seeder] No markdown files found in {SEED_DIR}.")
         return 0
 
     total_chunks = 0
@@ -72,15 +82,16 @@ def seed_chromadb_if_empty(persist_directory: str = "./data/chroma") -> int:
             total_chunks += 1
 
     if ids:
-        collection.add(
+        store.add_documents(
             ids=ids,
             documents=documents,
             metadatas=metadatas
         )
-        print(f"[RAG Seeder] Successfully indexed {total_chunks} chunks into ChromaDB.")
+        logger.info(f"[RAG Seeder] Successfully indexed {total_chunks} chunks into ChromaDB.")
 
-    return total_chunks
+    return store.count()
 
 
 if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO)
     seed_chromadb_if_empty()
