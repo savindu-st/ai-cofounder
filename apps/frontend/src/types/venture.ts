@@ -94,11 +94,38 @@ export interface FinancialParameters {
   fixed_monthly_costs: number;
 }
 
+export interface UnitEconomics {
+  arpu: number;
+  gross_margin: number;
+  cac: number;
+  ltv: number;
+  ltv_cac_ratio: number;
+  cac_payback_months: number;
+}
+
+export interface SensitivityCell {
+  price_change_pct: number;
+  churn_change_pct: number;
+  month_12_revenue: number;
+  ltv: number;
+  ltv_cac_ratio: number;
+}
+
+export interface SensitivityMatrix {
+  baseline_month_12_revenue: number;
+  baseline_ltv: number;
+  cells: SensitivityCell[];
+}
+
 export interface ProjectionScenario {
   scenario_name: string;
   month_12_revenue: number;
   month_12_customers: number;
   break_even_month?: number | null;
+  month_12_mrr?: number | null;
+  month_12_arr?: number | null;
+  ending_cash_reserve?: number | null;
+  ending_runway_months?: number | null;
   monthly_projections: Array<Record<string, any>>;
 }
 
@@ -108,6 +135,10 @@ export interface RevenueEstimationOutput {
   scenarios: ProjectionScenario[];
   tam_sam_som_valid: boolean;
   assumptions_summary: string[];
+  unit_economics?: UnitEconomics | null;
+  sensitivity?: SensitivityMatrix | null;
+  invariant_violations: string[];
+  horizon_months: number;
 }
 
 export interface Milestone {
@@ -134,6 +165,23 @@ export interface MarketingPlanOutput {
   warnings?: string[];
 }
 
+export interface ExecutionPhase {
+  phase_number: number;
+  name: string;
+  duration_weeks: number;
+  focus: string;
+  key_milestones: string[];
+  success_metrics: string[];
+}
+
+export interface VentureRisk {
+  category: string;
+  risk: string;
+  likelihood: string;
+  impact: string;
+  mitigation: string;
+}
+
 export interface StartupRoadmap {
   venture_id: string;
   venture_name: string;
@@ -146,6 +194,8 @@ export interface StartupRoadmap {
   overall_confidence_score: number;
   executive_summary: string;
   disclaimer: string;
+  execution_phases?: ExecutionPhase[];
+  top_risks?: VentureRisk[];
 }
 
 export interface VentureState {
@@ -167,6 +217,8 @@ export interface VentureState {
   warnings?: string[];
   human_review_required?: boolean;
   human_review_notes?: string | null;
+  human_review_action?: string | null;
+  replan_target?: string | null;
   created_at?: string;
   updated_at?: string;
 }

@@ -1,14 +1,26 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import { StartupRoadmap } from '../../types/venture';
-import { Award, Compass, CheckCircle2, ShieldAlert, TrendingUp, Rocket, FileText } from 'lucide-react';
+import { downloadAndSaveVentureExport, ExportFormat } from '../../services/api';
+import {
+  Award,
+  ShieldAlert,
+  FileText,
+  Download,
+  Loader2,
+  AlertCircle,
+  Rocket,
+} from 'lucide-react';
 
 interface Props {
   data?: StartupRoadmap | null;
 }
 
 export const RoadmapView: React.FC<Props> = ({ data }) => {
+  const [downloading, setDownloading] = useState<ExportFormat | null>(null);
+  const [downloadError, setDownloadError] = useState<string | null>(null);
+
   if (!data) {
     return (
       <div className="empty-state">
@@ -18,6 +30,18 @@ export const RoadmapView: React.FC<Props> = ({ data }) => {
       </div>
     );
   }
+
+  const handleDownload = async (format: ExportFormat) => {
+    setDownloading(format);
+    setDownloadError(null);
+    try {
+      await downloadAndSaveVentureExport(data.venture_id, format);
+    } catch (err: any) {
+      setDownloadError(err.message || `Failed to download ${format.toUpperCase()} report.`);
+    } finally {
+      setDownloading(null);
+    }
+  };
 
   return (
     <div>
@@ -31,7 +55,7 @@ export const RoadmapView: React.FC<Props> = ({ data }) => {
           marginBottom: '24px',
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', flexWrap: 'wrap', marginBottom: '12px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
             <Award size={22} color="#818cf8" />
             <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--text-primary)' }}>
@@ -49,6 +73,46 @@ export const RoadmapView: React.FC<Props> = ({ data }) => {
           {data.executive_summary}
         </p>
       </div>
+
+      {/* Export Actions */}
+      <div className="roadmap-export-bar">
+        <div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 700, fontSize: '0.95rem' }}>
+            <Download size={17} color="#818cf8" />
+            <span>Export Founder-Ready Documents</span>
+          </div>
+          <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '3px' }}>
+            Download the complete roadmap for pitch decks, grant applications, or investor follow-ups.
+          </p>
+        </div>
+        <div className="roadmap-export-actions">
+          <button
+            type="button"
+            className="export-btn primary"
+            onClick={() => handleDownload('pdf')}
+            disabled={downloading !== null}
+          >
+            {downloading === 'pdf' ? <Loader2 size={15} className="spin" /> : <FileText size={15} />}
+            <span>{downloading === 'pdf' ? 'Preparing PDF...' : 'Download PDF Report'}</span>
+          </button>
+          <button
+            type="button"
+            className="export-btn"
+            onClick={() => handleDownload('docx')}
+            disabled={downloading !== null}
+          >
+            {downloading === 'docx' ? <Loader2 size={15} className="spin" /> : <FileText size={15} />}
+            <span>{downloading === 'docx' ? 'Preparing Word...' : 'Download Word Roadmap'}</span>
+          </button>
+        </div>
+      </div>
+
+      {downloadError && (
+        <div className="export-error" role="alert">
+          <AlertCircle size={16} />
+          <span>{downloadError}</span>
+        </div>
+      )}
 
       {/* Synthesis Snapshot Across All Agents */}
       <div className="content-section">
@@ -112,6 +176,78 @@ export const RoadmapView: React.FC<Props> = ({ data }) => {
           )}
         </div>
       </div>
+
+      {/* Four Gated Execution Phases */}
+      {data.execution_phases && data.execution_phases.length > 0 && (
+        <div className="content-section" style={{ marginTop: '28px' }}>
+          <div className="section-title">
+            <Rocket size={18} color="#38bdf8" />
+            <span>Gated Execution Roadmap</span>
+          </div>
+          <div className="phase-grid">
+            {data.execution_phases.map((phase) => (
+              <article key={`${phase.phase_number}-${phase.name}`} className="phase-card">
+                <div className="phase-card-number">
+                  Phase {phase.phase_number} · {phase.duration_weeks} weeks
+                </div>
+                <h5>{phase.name}</h5>
+                <p className="phase-card-focus">{phase.focus}</p>
+
+                {phase.key_milestones.length > 0 && (
+                  <>
+                    <h6>Key Milestones</h6>
+                    <ul>
+                      {phase.key_milestones.map((milestone, index) => (
+                        <li key={index}>{milestone}</li>
+                      ))}
+                    </ul>
+                  </>
+                )}
+
+                {phase.success_metrics.length > 0 && (
+                  <>
+                    <h6>Success Metrics</h6>
+                    <ul>
+                      {phase.success_metrics.map((metric, index) => (
+                        <li key={index}>{metric}</li>
+                      ))}
+                    </ul>
+                  </>
+                )}
+              </article>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Top Cross-Functional Risks */}
+      {data.top_risks && data.top_risks.length > 0 && (
+        <div className="content-section" style={{ marginTop: '28px' }}>
+          <div className="section-title">
+            <ShieldAlert size={18} color="#f59e0b" />
+            <span>Top Cross-Functional Risks & Mitigations</span>
+          </div>
+          <div className="risk-grid">
+            {data.top_risks.map((risk, index) => (
+              <article key={`${risk.category}-${index}`} className="risk-card">
+                <div className="risk-card-header">
+                  <span className="risk-category">{risk.category}</span>
+                  <span className="risk-severity">
+                    <span>Likelihood: {risk.likelihood}</span>
+                    <span>·</span>
+                    <span>Impact: {risk.impact}</span>
+                  </span>
+                </div>
+                <h5>{risk.risk}</h5>
+                <p className="risk-mitigation">
+                  <strong>Mitigation: </strong>
+                  {risk.mitigation}
+                </p>
+              </article>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Advisory Disclaimer */}
       <div
