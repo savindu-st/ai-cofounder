@@ -17,17 +17,20 @@ from services.orchestrator.app.graph.nodes import (
     revenue_estimation_node,
     marketing_plan_node,
     roadmap_synthesis_node,
-    human_review_node
+    human_review_node,
+    replanning_node,
 )
 from services.orchestrator.app.graph.routing import (
     route_after_critic,
     route_after_revenue,
-    route_after_human_review
+    route_after_replanning,
+    route_after_human_review,
 )
 from services.orchestrator.app.graph.edges import (
     CRITIC_ROUTES,
     REVENUE_ROUTES,
-    HUMAN_REVIEW_ROUTES
+    REPLANNING_ROUTES,
+    HUMAN_REVIEW_ROUTES,
 )
 
 
@@ -55,6 +58,7 @@ def build_venture_workflow(
     builder.add_node("marketing_plan", marketing_plan_node)
     builder.add_node("roadmap_synthesis", roadmap_synthesis_node)
     builder.add_node("human_review", human_review_node)
+    builder.add_node("replanning", replanning_node)
 
     # 2. Register deterministic linear transitions
     builder.add_edge(START, "idea_analysis")
@@ -75,6 +79,12 @@ def build_venture_workflow(
         "revenue_estimation",
         route_after_revenue,
         REVENUE_ROUTES
+    )
+
+    builder.add_conditional_edges(
+        "replanning",
+        route_after_replanning,
+        REPLANNING_ROUTES
     )
 
     builder.add_conditional_edges(

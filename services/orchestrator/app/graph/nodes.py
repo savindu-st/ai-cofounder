@@ -4,19 +4,59 @@ Wraps in-process domain service interfaces as async LangGraph nodes, returning
 delta updates to VentureState and emitting real-time execution events.
 """
 
-import inspect
 from typing import Dict, Any
 
 from shared.contracts.venture_state import VentureState
 from shared.enums.workflow_status import WorkflowStage
 from services.orchestrator.app.orchestration.event_bus import publish_event
+from services.orchestrator.app.orchestration.failure_handler import (
+    NodeExecutionError,
+    run_node_operation,
+)
+from services.orchestrator.app.orchestration.human_review import pause_for_review
+from services.orchestrator.app.orchestration.replanning import build_replan_updates
+from services.orchestrator.app.state.state_manager import save_venture_state
 
 
-async def _invoke_domain(func, *args, **kwargs):
-    """Helper to invoke domain functions regardless of sync or async definition."""
-    if inspect.iscoroutinefunction(func):
-        return await func(*args, **kwargs)
-    return func(*args, **kwargs)
+async def _checkpoint(state: VentureState, updates: Dict[str, Any]) -> Dict[str, Any]:
+    """Persist a stage-boundary snapshot to the in-memory state cache."""
+    try:
+        await save_venture_state(state.model_copy(update=updates))
+    except Exception:
+        pass
+    return updates
+
+
+async def _invoke_domain(func, *args, node_name: str, state: VentureState, **kwargs):
+    """Invoke a domain call with timeout, retry, and isolated failure reporting."""
+    async def _on_retry(exc: BaseException, attempt: int, delay: float) -> None:
+        await publish_event(
+            venture_id=state.venture_id,
+            stage=state.current_stage,
+            event_type="WARNING",
+            progress_pct=0,
+            message=f"{node_name} transient failure (attempt {attempt}); retrying in {delay:.2f}s: {exc}",
+            data={"node": node_name, "attempt": attempt},
+        )
+
+    try:
+        return await run_node_operation(
+            func,
+            *args,
+            node_name=node_name,
+            on_retry=_on_retry,
+            **kwargs,
+        )
+    except NodeExecutionError as exc:
+        await publish_event(
+            venture_id=state.venture_id,
+            stage=WorkflowStage.FAILED,
+            event_type="WARNING",
+            progress_pct=0,
+            message=f"{node_name} failed after retries: {exc.cause}",
+            data={"node": node_name, "error": str(exc.cause)},
+        )
+        raise
 
 
 async def idea_analysis_node(state: VentureState) -> Dict[str, Any]:
@@ -30,7 +70,7 @@ async def idea_analysis_node(state: VentureState) -> Dict[str, Any]:
     )
 
     from services.business_intelligence.app.interface import run_idea_analysis
-    idea_output = await _invoke_domain(run_idea_analysis, state.founder_input)
+    idea_output = await _invoke_domain(run_idea_analysis, state.founder_input, node_name="idea_analysis", state=state)
 
     await publish_event(
         venture_id=state.venture_id,
@@ -40,10 +80,10 @@ async def idea_analysis_node(state: VentureState) -> Dict[str, Any]:
         message="Idea analysis completed. Moving to market research."
     )
 
-    return {
+    return await _checkpoint(state, {
         "current_stage": WorkflowStage.IDEA_ANALYSIS,
-        "idea_analysis": idea_output
-    }
+        "idea_analysis": idea_output,
+    })
 
 
 async def market_research_node(state: VentureState) -> Dict[str, Any]:
@@ -61,7 +101,9 @@ async def market_research_node(state: VentureState) -> Dict[str, Any]:
         run_market_research,
         state.idea_analysis,
         state.founder_input,
-        state.critique_history
+        state.critique_history,
+        node_name="market_research",
+        state=state,
     )
 
     await publish_event(
@@ -72,10 +114,10 @@ async def market_research_node(state: VentureState) -> Dict[str, Any]:
         message="Market research and competitor landscape synthesized."
     )
 
-    return {
+    return await _checkpoint(state, {
         "current_stage": WorkflowStage.MARKET_RESEARCH,
-        "market_research": market_output
-    }
+        "market_research": market_output,
+    })
 
 
 async def critic_validation_node(state: VentureState) -> Dict[str, Any]:
@@ -92,7 +134,9 @@ async def critic_validation_node(state: VentureState) -> Dict[str, Any]:
     critic_output = await _invoke_domain(
         run_critic_validation,
         state.market_research,
-        state.idea_analysis
+        state.idea_analysis,
+        node_name="critic_validation",
+        state=state,
     )
 
     updated_history = list(state.critique_history) + [critic_output]
@@ -105,11 +149,11 @@ async def critic_validation_node(state: VentureState) -> Dict[str, Any]:
         message=f"Critic validation status: {critic_output.status}. Confidence: {critic_output.confidence_score:.2f}."
     )
 
-    return {
+    return await _checkpoint(state, {
         "current_stage": WorkflowStage.CRITIC_VALIDATION,
         "market_validation": critic_output,
-        "critique_history": updated_history
-    }
+        "critique_history": updated_history,
+    })
 
 
 async def business_model_node(state: VentureState) -> Dict[str, Any]:
@@ -126,7 +170,9 @@ async def business_model_node(state: VentureState) -> Dict[str, Any]:
     bm_output = await _invoke_domain(
         run_business_model,
         state.idea_analysis,
-        state.market_research
+        state.market_research,
+        node_name="business_model",
+        state=state,
     )
 
     await publish_event(
@@ -137,10 +183,10 @@ async def business_model_node(state: VentureState) -> Dict[str, Any]:
         message="Business Model Canvas synthesized successfully."
     )
 
-    return {
+    return await _checkpoint(state, {
         "current_stage": WorkflowStage.BUSINESS_MODEL,
-        "business_model": bm_output
-    }
+        "business_model": bm_output,
+    })
 
 
 async def revenue_estimation_node(state: VentureState) -> Dict[str, Any]:
@@ -154,11 +200,19 @@ async def revenue_estimation_node(state: VentureState) -> Dict[str, Any]:
     )
 
     from services.finance.app.interface import run_revenue_estimation
+    critique_notes = None
+    if state.revenue_estimation and state.revenue_estimation.invariant_violations:
+        critique_notes = "; ".join(state.revenue_estimation.invariant_violations)
     rev_output = await _invoke_domain(
         run_revenue_estimation,
         state.idea_analysis,
         state.market_research,
-        state.business_model
+        state.business_model,
+        founder=state.founder_input,
+        critique_notes=critique_notes,
+        retune_round=state.finance_retune_count,
+        node_name="revenue_estimation",
+        state=state,
     )
 
     await publish_event(
@@ -169,10 +223,10 @@ async def revenue_estimation_node(state: VentureState) -> Dict[str, Any]:
         message="Financial projections and unit economics verified."
     )
 
-    return {
+    return await _checkpoint(state, {
         "current_stage": WorkflowStage.REVENUE_ESTIMATION,
-        "revenue_estimation": rev_output
-    }
+        "revenue_estimation": rev_output,
+    })
 
 
 async def marketing_plan_node(state: VentureState) -> Dict[str, Any]:
@@ -192,7 +246,9 @@ async def marketing_plan_node(state: VentureState) -> Dict[str, Any]:
         state.market_research,
         state.business_model,
         state.revenue_estimation,
-        state.founder_input
+        state.founder_input,
+        node_name="marketing_plan",
+        state=state,
     )
 
     await publish_event(
@@ -203,10 +259,10 @@ async def marketing_plan_node(state: VentureState) -> Dict[str, Any]:
         message="Marketing and go-to-market plan formulated."
     )
 
-    return {
+    return await _checkpoint(state, {
         "current_stage": WorkflowStage.MARKETING,
-        "marketing_plan": mktg_output
-    }
+        "marketing_plan": mktg_output,
+    })
 
 
 async def roadmap_synthesis_node(state: VentureState) -> Dict[str, Any]:
@@ -220,7 +276,7 @@ async def roadmap_synthesis_node(state: VentureState) -> Dict[str, Any]:
     )
 
     from services.marketing_output.app.interface import run_roadmap_synthesis
-    roadmap_output = await _invoke_domain(run_roadmap_synthesis, state)
+    roadmap_output = await _invoke_domain(run_roadmap_synthesis, state, node_name="roadmap_synthesis", state=state)
 
     await publish_event(
         venture_id=state.venture_id,
@@ -231,22 +287,56 @@ async def roadmap_synthesis_node(state: VentureState) -> Dict[str, Any]:
         data={"overall_confidence": roadmap_output.overall_confidence_score}
     )
 
-    return {
+    return await _checkpoint(state, {
         "current_stage": WorkflowStage.COMPLETED,
-        "final_roadmap": roadmap_output
-    }
+        "final_roadmap": roadmap_output,
+    })
+
+
+async def replanning_node(state: VentureState) -> Dict[str, Any]:
+    """Determine the smallest repair stage and record anti-oscillation context."""
+    decision = build_replan_updates(state)
+
+    await publish_event(
+        venture_id=state.venture_id,
+        stage=WorkflowStage.REPLANNING,
+        event_type="REPLAN_TRIGGERED",
+        progress_pct=55,
+        message=decision.reason,
+        data={
+            "target": decision.target,
+            "replan_count": state.replan_count,
+            "market_replan_count": state.market_replan_count,
+            "finance_retune_count": state.finance_retune_count,
+            "oscillation_count": decision.oscillation_count,
+        },
+    )
+    if decision.is_oscillating:
+        await publish_event(
+            venture_id=state.venture_id,
+            stage=WorkflowStage.REPLANNING,
+            event_type="WARNING",
+            progress_pct=55,
+            message=(
+                "Repeated critique detected; escalating the repair target to avoid "
+                "an unproductive oscillation loop."
+            ),
+            data={"target": decision.target, "oscillation_count": decision.oscillation_count},
+        )
+
+    return await _checkpoint(state, decision.updates)
 
 
 async def human_review_node(state: VentureState) -> Dict[str, Any]:
     """Pause Node: Interrupted by LangGraph for founder review when threshold exceeded."""
+    reason = "Human-in-the-Loop review required: automated re-planning threshold exceeded."
     await publish_event(
         venture_id=state.venture_id,
         stage="HUMAN_REVIEW",
         event_type="HITL_REQUIRED",
-        progress_pct=state.replan_count * 10,
-        message="Human-in-the-Loop review required: automated re-planning threshold exceeded."
+        progress_pct=min(100, state.replan_count * 10),
+        message=reason,
+        data={"replan_count": state.replan_count, "warnings": state.warnings[-5:]},
     )
 
-    return {
-        "human_review_required": True
-    }
+    return await _checkpoint(state, pause_for_review(reason))
