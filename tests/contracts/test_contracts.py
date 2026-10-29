@@ -16,10 +16,13 @@ from shared.contracts.business_model import BusinessModelCanvas, BusinessModelOu
 from shared.contracts.revenue import (
     FinancialParameters,
     ProjectionScenario,
-    RevenueEstimationOutput
+    RevenueEstimationOutput,
+    SensitivityCell,
+    SensitivityMatrix,
+    UnitEconomics
 )
 from shared.contracts.marketing import Milestone, MarketingPlanOutput
-from shared.contracts.roadmap import StartupRoadmap
+from shared.contracts.roadmap import ExecutionPhase, StartupRoadmap, VentureRisk
 from shared.contracts.venture_state import VentureState
 from shared.enums.confidence_level import ValidationStatus
 from shared.enums.workflow_status import WorkflowStage
@@ -225,3 +228,75 @@ class TestContracts:
         restored = VentureState(**dumped)
         assert restored.venture_id == state.venture_id
         assert restored.current_stage == WorkflowStage.INITIALIZED
+
+    def test_revenue_extended_contracts(self):
+        """Verifies optional unit economics and sensitivity fields round-trip safely."""
+        params = FinancialParameters(
+            monthly_price=99.0,
+            starting_customers=25,
+            monthly_growth_rate=0.1,
+            monthly_churn_rate=0.03,
+            cogs_per_unit=15.0,
+            fixed_monthly_costs=5000.0
+        )
+        unit_economics = UnitEconomics(
+            arpu=99.0,
+            gross_margin=0.8485,
+            cac=150.0,
+            ltv=2800.0,
+            ltv_cac_ratio=18.67,
+            cac_payback_months=1.52
+        )
+        sensitivity = SensitivityMatrix(
+            baseline_month_12_revenue=50000.0,
+            baseline_ltv=2800.0,
+            cells=[SensitivityCell(price_change_pct=0.2, churn_change_pct=0.0, month_12_revenue=60000.0)]
+        )
+        output = RevenueEstimationOutput(
+            pricing_strategy="Subscription",
+            parameters=params,
+            scenarios=[ProjectionScenario(scenario_name="moderate", month_12_revenue=50000.0, month_12_customers=500)],
+            unit_economics=unit_economics,
+            sensitivity=sensitivity,
+            invariant_violations=[],
+            horizon_months=24
+        )
+        assert output.unit_economics is not None
+        assert output.unit_economics.ltv_cac_ratio == 18.67
+        assert output.sensitivity.cells[0].price_change_pct == 0.2
+        assert output.horizon_months == 24
+
+    def test_roadmap_execution_phases_and_risks(self):
+        """Verifies the extended StartupRoadmap accepts phases and venture risks."""
+        phase = ExecutionPhase(
+            phase_number=1,
+            name="Validation",
+            duration_weeks=4,
+            focus="Validate problem-solution fit",
+            key_milestones=["20 customer interviews"],
+            success_metrics=["10 design partners active"]
+        )
+        risk = VentureRisk(
+            category="Market",
+            risk="Demand is lower than forecast",
+            likelihood="MEDIUM",
+            impact="HIGH",
+            mitigation="Run paid landing page tests before building"
+        )
+        assert phase.phase_number == 1
+        assert risk.mitigation.startswith("Run")
+
+    def test_venture_state_review_actions(self):
+        """Verifies optional HITL action fields are preserved across hydration."""
+        founder = FounderInput(startup_idea="AI copilot", target_market="SaaS")
+        state = VentureState(
+            venture_id="ven-review-1",
+            founder_input=founder,
+            human_review_required=True,
+            human_review_notes="Review margin assumptions",
+            human_review_action="PROCEED_ANYWAY",
+            replan_target="market_research"
+        )
+        restored = VentureState(**state.model_dump())
+        assert restored.human_review_action == "PROCEED_ANYWAY"
+        assert restored.replan_target == "market_research"
