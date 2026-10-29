@@ -1,1 +1,26 @@
-{"idea": "General food delivery in Colombo", "budget": 200000}
+{
+  "scenario_id": "weak_market",
+  "description": "Critic rejects the first market research pass, forcing a targeted research replan.",
+  "founder_input": {
+    "startup_idea": "General food delivery for restaurants in Colombo",
+    "target_market": "Food Delivery",
+    "target_geography": "Colombo, Sri Lanka",
+    "budget": 200000.0,
+    "timeline_months": 9,
+    "goals": "Launch in three districts and reach 500 monthly orders",
+    "constraints": ["Cold-chain delivery must remain profitable"],
+    "skills_resources": "Operations lead and two part-time drivers"
+  },
+  "faults": {
+    "critic_research_failures": 1
+  },
+  "expected": {
+    "completed": true,
+    "replan_count": 1,
+    "market_replan_count": 1,
+    "finance_retune_count": 0,
+    "replan_target": "market_research",
+    "min_warning_events": 0,
+    "warnings_contain": ["market_research required"]
+  }
+}

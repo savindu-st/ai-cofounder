@@ -1,1 +1,27 @@
-{"idea": "Free delivery service with zero revenue", "budget": 50000}
+{
+  "scenario_id": "invalid_finance",
+  "description": "First finance pass violates market and unit-economics invariants, forcing a targeted finance retune.",
+  "founder_input": {
+    "startup_idea": "Free same-day delivery service with zero delivery revenue",
+    "target_market": "Last-Mile Delivery",
+    "target_geography": "Colombo, Sri Lanka",
+    "budget": 50000.0,
+    "timeline_months": 6,
+    "goals": "Validate a paid delivery model before launch",
+    "constraints": ["No negative gross margin", "SOM must not exceed SAM"],
+    "skills_resources": "Logistics coordinator and contract drivers"
+  },
+  "faults": {
+    "finance_invalid_rounds": 1
+  },
+  "expected": {
+    "completed": true,
+    "replan_count": 0,
+    "market_replan_count": 0,
+    "min_finance_retune_count": 1,
+    "max_finance_retune_count": 2,
+    "replan_target": "revenue_estimation",
+    "min_warning_events": 0,
+    "warnings_contain": ["revenue_estimation required"]
+  }
+}

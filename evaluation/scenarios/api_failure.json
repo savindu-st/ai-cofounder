@@ -1,1 +1,26 @@
-{"idea": "Hardware IoT", "force_failure": true}
+{
+  "scenario_id": "api_failure",
+  "description": "Transient market research provider outage exercises retry and fallback recovery.",
+  "founder_input": {
+    "startup_idea": "Industrial IoT sensor platform for predictive maintenance in factories",
+    "target_market": "Industrial IoT",
+    "target_geography": "Global",
+    "budget": 250000.0,
+    "timeline_months": 12,
+    "goals": "Pilot with five manufacturing plants",
+    "constraints": ["Sensor hardware must maintain positive gross margin"],
+    "skills_resources": "Embedded hardware engineer and cloud backend developer"
+  },
+  "faults": {
+    "market_research_failures": 1
+  },
+  "expected": {
+    "completed": true,
+    "replan_count": 0,
+    "market_replan_count": 0,
+    "finance_retune_count": 0,
+    "replan_target": null,
+    "min_warning_events": 1,
+    "warnings_contain": []
+  }
+}
