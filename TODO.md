@@ -16,8 +16,8 @@
 | Subsystem / Domain Module          | Owner                 | Status     |
 +------------------------------------+-----------------------+------------+
 | 1. Central Orchestrator & Graph    | Member 1 (Lead/Infra) | 🟡 SKELETON|
-| 2. Business Intelligence & RAG     | Member 2              | 🟡 SKELETON|
-| 3. Market Research & Critic Agent  | Member 3              | 🟡 SKELETON|
+| 2. Business Intelligence & RAG     | Member 2              | 🟢 COMPLETED|
+| 3. Market Research & Critic Agent  | Member 3              | 🟢 COMPLETED|
 | 4. Deterministic Financial Engine  | Member 4              | 🟡 PARTIAL |
 | 5. Marketing & Export Generators   | Member 5              | 🟢 ADVANCED|
 | 6. Database & Persistence Tier     | Shared (Member 1 Lead)| 🔴 STUBBED |
@@ -141,43 +141,43 @@ These issues currently impede imports, clean builds, and test runs.
 **Shared Dependencies:** [`shared/contracts/idea.py`](file:///home/savindust/Documents/projects/ai-co-founder/ai-cofounder/shared/contracts/idea.py), [`shared/contracts/business_model.py`](file:///home/savindust/Documents/projects/ai-co-founder/ai-cofounder/shared/contracts/business_model.py)
 
 ### 1. Idea Analysis Agent
-- [ ] **2.1 Implement Idea Analysis LLM Agent**
+- [x] **2.1 Implement Idea Analysis LLM Agent**
   - **File:** [`services/business_intelligence/app/agents/idea_analysis/agent.py`](file:///home/savindust/Documents/projects/ai-co-founder/ai-cofounder/services/business_intelligence/app/agents/idea_analysis/agent.py)
   - **Task:** Build agent that deconstructs raw founder inputs into structured assumptions, customer segments, value propositions, and unfair advantages.
   - **Acceptance Criteria:** Returns valid [`IdeaAnalysisOutput`](file:///home/savindust/Documents/projects/ai-co-founder/ai-cofounder/shared/contracts/idea.py) conforming to Pydantic contract.
-- [ ] **2.2 Implement Idea Analysis Prompt Templates & Schemas**
+- [x] **2.2 Implement Idea Analysis Prompt Templates & Schemas**
   - **Files:** [`services/business_intelligence/app/agents/idea_analysis/prompts.py`](file:///home/savindust/Documents/projects/ai-co-founder/ai-cofounder/services/business_intelligence/app/agents/idea_analysis/prompts.py), [`schemas.py`](file:///home/savindust/Documents/projects/ai-co-founder/ai-cofounder/services/business_intelligence/app/agents/idea_analysis/schemas.py)
   - **Task:** Prompts enforcing structured JSON schema output, extract problem statement, unfair advantages, primary audience personas, and testable hypotheses.
-- [ ] **2.3 Implement Idea Validation & Sanitization**
+- [x] **2.3 Implement Idea Validation & Sanitization**
   - **File:** [`services/business_intelligence/app/agents/idea_analysis/validator.py`](file:///home/savindust/Documents/projects/ai-co-founder/ai-cofounder/services/business_intelligence/app/agents/idea_analysis/validator.py)
   - **Task:** Validate founder inputs (min length, non-empty problem description, reasonable industry categorizations). Flag ambiguous or unviable inputs early.
 
 ### 2. RAG Knowledge Base & Seeding Pipeline
-- [ ] **2.4 Complete Startup Framework Knowledge Corpus**
+- [x] **2.4 Complete Startup Framework Knowledge Corpus**
   - **Directory:** [`services/business_intelligence/data/seed/`](file:///home/savindust/Documents/projects/ai-co-founder/ai-cofounder/services/business_intelligence/data/seed)
   - **Files to complete/expand:**
     - `bmc_reference.md`: Osterwalder 9 blocks theoretical definitions and block relationship constraints.
     - `lean_canvas_guide.md`: Maurya Lean Canvas problem/solution/early adopter guidelines.
     - `startup_case_studies.md`: 15 vertical case studies (B2B SaaS, marketplace, fintech, direct-to-consumer, AI developer tooling).
     - `porter_swot_guide.md`: Porter's 5 Forces and SWOT framework references.
-- [ ] **2.5 Implement ChromaDB Vector Store & Embedding Manager**
+- [x] **2.5 Implement ChromaDB Vector Store & Embedding Manager**
   - **Files:** [`services/business_intelligence/app/rag/vector_store.py`](file:///home/savindust/Documents/projects/ai-co-founder/ai-cofounder/services/business_intelligence/app/rag/vector_store.py), [`embeddings.py`](file:///home/savindust/Documents/projects/ai-co-founder/ai-cofounder/services/business_intelligence/app/rag/embeddings.py)
   - **Task:** Configure ChromaDB client with persistent disk volume mount (`./data/chroma`). Implement embedding generation using `sentence-transformers/all-MiniLM-L6-v2` (or OpenAI `text-embedding-3-small` fallback).
-- [ ] **2.6 Implement Hybrid Retriever with MMR Diversity**
+- [x] **2.6 Implement Hybrid Retriever with MMR Diversity**
   - **File:** [`services/business_intelligence/app/rag/retriever.py`](file:///home/savindust/Documents/projects/ai-co-founder/ai-cofounder/services/business_intelligence/app/rag/retriever.py)
   - **Task:** Query expansion + cosine similarity search ($k=5$) + Maximal Marginal Relevance (MMR, $\lambda=0.7$) to retrieve top 3 diverse framework chunks per canvas block.
 
 ### 3. Business Model Agent (RAG-Powered)
-- [ ] **2.7 Implement Business Model Generation Agent**
+- [x] **2.7 Implement Business Model Generation Agent**
   - **File:** [`services/business_intelligence/app/agents/business_model/agent.py`](file:///home/savindust/Documents/projects/ai-co-founder/ai-cofounder/services/business_intelligence/app/agents/business_model/agent.py)
   - **Task:** Consume `IdeaAnalysisOutput` + `MarketResearchOutput`, query RAG retriever for relevant blocks, synthesize complete 9-block Business Model Canvas.
-- [ ] **2.8 Implement Canvas Builder & Verification**
+- [x] **2.8 Implement Canvas Builder & Verification**
   - **File:** [`services/business_intelligence/app/agents/business_model/canvas_builder.py`](file:///home/savindust/Documents/projects/ai-co-founder/ai-cofounder/services/business_intelligence/app/agents/business_model/canvas_builder.py)
   - **Task:** Construct [`BusinessModelCanvas`](file:///home/savindust/Documents/projects/ai-co-founder/ai-cofounder/shared/contracts/business_model.py) object, verify consistency between value proposition, cost structure, and revenue streams.
-- [ ] **2.9 Wire Up Public Interface**
+- [x] **2.9 Wire Up Public Interface**
   - **File:** [`services/business_intelligence/app/interface.py`](file:///home/savindust/Documents/projects/ai-co-founder/ai-cofounder/services/business_intelligence/app/interface.py)
   - **Task:** Replace hardcoded mocks in `run_idea_analysis` and `run_business_model` with real agent invocations.
-- [ ] **2.10 Write Domain Unit Tests**
+- [x] **2.10 Write Domain Unit Tests**
   - **Directory:** [`services/business_intelligence/tests/`](file:///home/savindust/Documents/projects/ai-co-founder/ai-cofounder/services/business_intelligence/tests)
   - **Tasks:**
     - `test_idea_analysis.py`: Test assumption deconstruction with mock LLM outputs.
@@ -193,47 +193,47 @@ These issues currently impede imports, clean builds, and test runs.
 **Shared Dependencies:** [`shared/contracts/market.py`](file:///home/savindust/Documents/projects/ai-co-founder/ai-cofounder/shared/contracts/market.py), [`shared/contracts/critic.py`](file:///home/savindust/Documents/projects/ai-co-founder/ai-cofounder/shared/contracts/critic.py)
 
 ### 1. Market Research Tools & Web Scraping
-- [ ] **3.1 Implement Live Web Search Tool (Tavily Integration)**
+- [x] **3.1 Implement Live Web Search Tool (Tavily Integration)**
   - **File:** [`services/research/app/tools/web_search.py`](file:///home/savindust/Documents/projects/ai-co-founder/ai-cofounder/services/research/app/tools/web_search.py)
   - **Task:** Implement `TavilySearchTool` querying live web for competitor data, market size (TAM/SAM/SOM), industry growth rates (CAGR), and regulatory hurdles.
   - **Fallback:** If `TAVILY_API_KEY` is missing or network fails, gracefully degrade to cached fixtures or parameterized model knowledge with clear warning flags.
-- [ ] **3.2 Implement Search Cache with Redis (24-Hour TTL)**
+- [x] **3.2 Implement Search Cache with Redis (24-Hour TTL)**
   - **File:** [`services/research/app/tools/search_cache.py`](file:///home/savindust/Documents/projects/ai-co-founder/ai-cofounder/services/research/app/tools/search_cache.py)
   - **Task:** Normalize search queries, generate SHA-256 hash keys, cache results in Redis for 24 hours to prevent repeated API cost and speed up re-planning runs.
-- [ ] **3.3 Implement Web Page Scraper & Source Parser**
+- [x] **3.3 Implement Web Page Scraper & Source Parser**
   - **File:** [`services/research/app/tools/source_parser.py`](file:///home/savindust/Documents/projects/ai-co-founder/ai-cofounder/services/research/app/tools/source_parser.py)
   - **Task:** Lightweight BeautifulSoup scraper to parse competitor landing pages, extract pricing tiers, feature lists, and company taglines.
 
 ### 2. Market Research Agent & Market Sizing
-- [ ] **3.4 Implement Market Research Agent Core**
+- [x] **3.4 Implement Market Research Agent Core**
   - **File:** [`services/research/app/agents/market_research/agent.py`](file:///home/savindust/Documents/projects/ai-co-founder/ai-cofounder/services/research/app/agents/market_research/agent.py)
   - **Task:** Orchestrate web queries based on `IdeaAnalysisOutput`; identify 3–5 competitors; extract pricing; synthesize market trends and entry barriers.
   - **Targeted Re-planning Awareness:** When `critique_history` is provided, generate targeted search queries specifically resolving prior unverified claims.
-- [ ] **3.5 Implement Deterministic Market Sizing Engine**
+- [x] **3.5 Implement Deterministic Market Sizing Engine**
   - **File:** [`services/research/app/agents/market_research/market_sizing.py`](file:///home/savindust/Documents/projects/ai-co-founder/ai-cofounder/services/research/app/agents/market_research/market_sizing.py)
   - **Task:** Triangulate TAM, SAM, and SOM using top-down industry reports combined with bottom-up customer counts $\times$ pricing. Enforce preliminary $SOM \le SAM \le TAM$ invariant before returning.
-- [ ] **3.6 Implement Market Research Prompts & Schemas**
+- [x] **3.6 Implement Market Research Prompts & Schemas**
   - **Files:** [`services/research/app/agents/market_research/prompts.py`](file:///home/savindust/Documents/projects/ai-co-founder/ai-cofounder/services/research/app/agents/market_research/prompts.py), [`schemas.py`](file:///home/savindust/Documents/projects/ai-co-founder/ai-cofounder/services/research/app/agents/market_research/schemas.py)
   - **Task:** Prompts strictly mapping claims to external URL citations.
 
 ### 3. Critic & Evidence Validation Agent
-- [ ] **3.7 Implement Strict 3-Point Critic Rubric Engine**
+- [x] **3.7 Implement Strict 3-Point Critic Rubric Engine**
   - **File:** [`services/research/app/critic/critic.py`](file:///home/savindust/Documents/projects/ai-co-founder/ai-cofounder/services/research/app/critic/critic.py)
   - **Task:** Evaluate [`MarketResearchOutput`](file:///home/savindust/Documents/projects/ai-co-founder/ai-cofounder/shared/contracts/market.py) against:
     1. `confidence_score >= 0.70`
     2. `verified_sources_count >= 2`
     3. `len(unsupported_claims) == 0`
   - **Output:** Emits [`CriticValidationOutput`](file:///home/savindust/Documents/projects/ai-co-founder/ai-cofounder/shared/contracts/critic.py) with `ValidationStatus` (`VALID`, `LOW_CONFIDENCE`, `RESEARCH_REQUIRED`, `REANALYSIS_REQUIRED`).
-- [ ] **3.8 Implement Citation & Competitor Validation Checks**
+- [x] **3.8 Implement Citation & Competitor Validation Checks**
   - **Files:** [`services/research/app/critic/citation_validator.py`](file:///home/savindust/Documents/projects/ai-co-founder/ai-cofounder/services/research/app/critic/citation_validator.py), [`competitor_checker.py`](file:///home/savindust/Documents/projects/ai-co-founder/ai-cofounder/services/research/app/critic/competitor_checker.py), [`evidence_validator.py`](file:///home/savindust/Documents/projects/ai-co-founder/ai-cofounder/services/research/app/critic/evidence_validator.py)
   - **Task:** Verify URL formatting, check domain reputation, cross-reference market claims against citations, flag ungrounded market claims.
-- [ ] **3.9 Implement Composite Confidence Scoring Formula**
+- [x] **3.9 Implement Composite Confidence Scoring Formula**
   - **File:** [`services/research/app/critic/confidence.py`](file:///home/savindust/Documents/projects/ai-co-founder/ai-cofounder/services/research/app/critic/confidence.py)
   - **Task:** Calculate composite confidence: weighted combination of citation count, competitor detail depth, and market sizing source verification.
-- [ ] **3.10 Wire Up Public Interface**
+- [x] **3.10 Wire Up Public Interface**
   - **File:** [`services/research/app/interface.py`](file:///home/savindust/Documents/projects/ai-co-founder/ai-cofounder/services/research/app/interface.py)
   - **Task:** Replace mock return objects in `run_market_research` and `run_critic_validation` with real agent executions.
-- [ ] **3.11 Write Domain Unit Tests**
+- [x] **3.11 Write Domain Unit Tests**
   - **Directory:** [`services/research/tests/`](file:///home/savindust/Documents/projects/ai-co-founder/ai-cofounder/services/research/tests)
   - **Tasks:**
     - `test_web_search.py`: Test Tavily search and Redis caching behavior.

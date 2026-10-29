@@ -2,14 +2,65 @@
 
 Exposes public entrypoints for Market Research (Tavily search & competitor extraction)
 and Critic / Evidence Validation.
-All interactions from orchestrator or other agents must pass through this interface.
+All interactions from orchestrator or other agents pass through this interface.
 """
 
-from typing import Optional, List
+import os
+import logging
+from typing import Optional, List, Any
+
 from shared.contracts.idea import FounderInput, IdeaAnalysisOutput
-from shared.contracts.market import MarketResearchOutput, Competitor
+from shared.contracts.market import MarketResearchOutput
 from shared.contracts.critic import CriticValidationOutput
-from shared.enums.confidence_level import ValidationStatus
+from services.research.app.agents.market_research.agent import MarketResearchAgent
+from services.research.app.critic.critic import CriticEngine
+from services.research.app.tools.web_search import TavilySearchTool
+from services.research.app.tools.search_cache import SearchCache
+from services.research.app.tools.source_parser import SourceParser
+
+logger = logging.getLogger(__name__)
+
+# Module-level singletons
+_research_agent: Optional[MarketResearchAgent] = None
+_critic_engine: Optional[CriticEngine] = None
+
+
+def _get_llm() -> Optional[Any]:
+    """Instantiates LLM if provider credentials exist; returns None for deterministic fallback."""
+    openai_key = os.getenv("OPENAI_API_KEY")
+    if openai_key and not openai_key.startswith("your-") and openai_key != "mock":
+        try:
+            from langchain_openai import ChatOpenAI
+            model_name = os.getenv("MARKET_RESEARCH_MODEL", os.getenv("DEFAULT_MODEL", "gpt-4o-mini"))
+            return ChatOpenAI(model=model_name, api_key=openai_key, temperature=0.2)
+        except Exception as e:
+            logger.debug(f"[Research Interface] Could not initialize ChatOpenAI: {e}")
+    return None
+
+
+def get_market_research_agent() -> MarketResearchAgent:
+    """Returns singleton MarketResearchAgent."""
+    global _research_agent
+    if _research_agent is None:
+        llm = _get_llm()
+        search_tool = TavilySearchTool()
+        cache = SearchCache()
+        parser = SourceParser()
+        _research_agent = MarketResearchAgent(
+            llm=llm,
+            search_tool=search_tool,
+            cache=cache,
+            parser=parser
+        )
+    return _research_agent
+
+
+def get_critic_engine() -> CriticEngine:
+    """Returns singleton CriticEngine."""
+    global _critic_engine
+    if _critic_engine is None:
+        _critic_engine = CriticEngine()
+    return _critic_engine
 
 
 async def run_market_research(
@@ -18,50 +69,11 @@ async def run_market_research(
     critique_history: Optional[List[CriticValidationOutput]] = None
 ) -> MarketResearchOutput:
     """Executes market research with search tools, competitor analysis, and market sizing."""
-    # In full implementation, calls TavilySearchTool and uses critique_history for targeted replanning
-    return MarketResearchOutput(
-        competitor_landscape=[
-            Competitor(
-                name="Incumbent Solutions Co",
-                description="Traditional enterprise legacy platform",
-                strengths=["High market presence", "Extensive sales force"],
-                weaknesses=["High price", "Slow onboarding", "Outdated UX"],
-                pricing_model="$500/month per seat",
-                website_url="https://example.com/incumbent"
-            ),
-            Competitor(
-                name="Agile Tooling Inc",
-                description="Mid-market modern point solution",
-                strengths=["Modern UI", "Self-serve trial"],
-                weaknesses=["Limited feature depth", "No automated planning"],
-                pricing_model="$49/month flat",
-                website_url="https://example.com/agile"
-            )
-        ],
-        customer_personas=[
-            {"role": "Early-Stage Founder", "pain_point": "Lack of co-founder time and market clarity", "willingness_to_pay": "Moderate"},
-            {"role": "Product Manager", "pain_point": "Manual research aggregation", "willingness_to_pay": "High"}
-        ],
-        market_trends=[
-            "Rapid acceleration of AI-augmented venture creation",
-            "Demand for deterministic business planning tools"
-        ],
-        entry_barriers=[
-            "Customer trust in automated financial and strategic advice",
-            "Access to proprietary market signals"
-        ],
-        tam_estimate=5000000000.0,
-        sam_estimate=500000000.0,
-        som_estimate=50000000.0,
-        supporting_evidence=[
-            "Market research reports indicate 24% annual growth in AI productivity tools",
-            "Competitor pricing verified via public pricing pages"
-        ],
-        source_urls=[
-            "https://example.com/market-report-2025",
-            "https://example.com/venture-trends"
-        ],
-        confidence_score=0.85
+    agent = get_market_research_agent()
+    return await agent.research(
+        idea=idea,
+        founder=founder,
+        critique_history=critique_history
     )
 
 
@@ -70,29 +82,5 @@ async def run_critic_validation(
     idea: IdeaAnalysisOutput
 ) -> CriticValidationOutput:
     """Applies the strict 3-point rubric: confidence >= 0.70, >= 2 verified citations, zero unverified claims."""
-    verified_sources = len(market.source_urls)
-    unsupported_claims: List[str] = []
-    
-    # Evaluate market scale invariant: SOM <= SAM <= TAM
-    if market.tam_estimate and market.sam_estimate and market.som_estimate:
-        if not (market.som_estimate <= market.sam_estimate <= market.tam_estimate):
-            unsupported_claims.append("Market sizing violation: SOM must be <= SAM <= TAM")
-    
-    # Evaluate source threshold
-    if verified_sources < 2:
-        unsupported_claims.append(f"Insufficient citation sources: required at least 2, found {verified_sources}")
-    
-    # Evaluate confidence score
-    is_valid = (market.confidence_score >= 0.70) and (len(unsupported_claims) == 0) and (verified_sources >= 2)
-    
-    status = ValidationStatus.VALID if is_valid else ValidationStatus.RESEARCH_REQUIRED
-    
-    return CriticValidationOutput(
-        status=status,
-        confidence_score=market.confidence_score if is_valid else min(0.55, market.confidence_score),
-        unsupported_claims=unsupported_claims,
-        verified_sources_count=verified_sources,
-        feedback_notes="Validation passed all criteria." if is_valid else "; ".join(unsupported_claims),
-        requires_pivot=False,
-        suggested_alternatives=[]
-    )
+    engine = get_critic_engine()
+    return engine.evaluate(market=market, idea=idea)

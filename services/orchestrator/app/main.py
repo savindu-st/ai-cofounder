@@ -25,6 +25,21 @@ async def lifespan(app: FastAPI):
     except Exception as exc:
         print(f"[Startup Warning] Database initialization failed: {exc}")
 
+    if os.getenv("ENABLE_STARTUP_RECOVERY", "true").lower() in ("true", "1", "yes"):
+        try:
+            from shared.db.session import AsyncSessionLocal
+            from services.orchestrator.app.orchestration.coordinator import coordinator
+            from services.orchestrator.app.orchestration.failure_handler import (
+                recover_incomplete_ventures,
+            )
+
+            async with AsyncSessionLocal() as recovery_session:
+                recovered = await recover_incomplete_ventures(coordinator, recovery_session)
+            if recovered:
+                print(f"[Startup Recovery] Resumed {len(recovered)} incomplete venture(s).")
+        except Exception as exc:
+            print(f"[Startup Warning] Incomplete venture recovery skipped: {exc}")
+
     persist_dir = os.getenv("CHROMA_PERSIST_DIRECTORY", "./data/chroma")
     try:
         import sys

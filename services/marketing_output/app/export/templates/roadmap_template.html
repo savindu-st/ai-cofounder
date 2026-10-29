@@ -1,1 +1,270 @@
-<!-- HTML Template for Roadmap Export -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{ roadmap.venture_name }} - Executive Startup Roadmap</title>
+  <style>
+    :root {
+      --ink: #0f172a;
+      --muted: #526077;
+      --line: #dbe3ef;
+      --brand: #4338ca;
+      --brand-soft: #eef2ff;
+      --accent: #0f766e;
+      --surface: #ffffff;
+      --canvas: #f5f7fb;
+      --warn: #b45309;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--canvas);
+      color: var(--ink);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      line-height: 1.55;
+    }
+    .page { max-width: 1180px; margin: 0 auto; padding: 32px 20px 56px; }
+    .cover {
+      background: linear-gradient(135deg, #1e1b4b 0%, #3730a3 55%, #0f766e 100%);
+      color: #fff;
+      border-radius: 20px;
+      padding: 46px 40px;
+      box-shadow: 0 18px 40px rgba(30, 27, 75, 0.22);
+    }
+    .eyebrow { text-transform: uppercase; letter-spacing: 0.16em; font-size: 12px; font-weight: 700; opacity: 0.78; }
+    h1 { font-size: clamp(2rem, 5vw, 3.4rem); line-height: 1.08; margin: 12px 0 16px; }
+    .cover p { max-width: 760px; font-size: 1.05rem; opacity: 0.92; }
+    .meta { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 26px; }
+    .pill { background: rgba(255,255,255,0.14); border: 1px solid rgba(255,255,255,0.24); border-radius: 999px; padding: 7px 12px; font-size: 0.82rem; }
+    .confidence { background: #fff; color: #1e1b4b; font-weight: 800; }
+    .grid { display: grid; gap: 18px; }
+    .grid.two { grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); }
+    .grid.three { grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
+    section { margin-top: 28px; }
+    .card { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 22px; box-shadow: 0 8px 20px rgba(15,23,42,0.04); }
+    h2 { font-size: 1.42rem; margin: 0 0 14px; color: #1e1b4b; }
+    h3 { font-size: 0.92rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--brand); margin: 0 0 10px; }
+    p { margin: 0 0 12px; }
+    ul { margin: 0; padding-left: 20px; }
+    li { margin: 5px 0; }
+    .summary { border-left: 5px solid var(--brand); }
+    .summary p { font-size: 1.04rem; }
+    .stat { background: var(--brand-soft); border-radius: 12px; padding: 14px; }
+    .stat strong { display: block; font-size: 1.45rem; color: #1e1b4b; }
+    .stat span { color: var(--muted); font-size: 0.82rem; }
+    .bmc { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 12px; }
+    .bmc .block { background: #fbfcff; border: 1px solid var(--line); border-radius: 10px; padding: 14px; min-height: 150px; }
+    .bmc .block h3 { color: #1e3a8a; }
+    table { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
+    th, td { border: 1px solid var(--line); padding: 9px 10px; text-align: left; vertical-align: top; }
+    th { background: var(--brand-soft); color: #1e3a8a; font-size: 0.76rem; text-transform: uppercase; letter-spacing: 0.04em; }
+    .table-wrap { overflow-x: auto; }
+    .phase { border-top: 4px solid var(--brand); }
+    .phase .weeks { color: var(--accent); font-size: 0.78rem; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; }
+    .risk { border-left: 4px solid var(--warn); }
+    .risk .tag { display: inline-block; background: #fff7ed; color: #9a3412; border-radius: 999px; font-size: 0.72rem; font-weight: 700; padding: 3px 9px; margin-bottom: 8px; }
+    .muted { color: var(--muted); }
+    .warning { background: #fffbeb; border: 1px solid #fde68a; border-radius: 10px; padding: 14px; }
+    .sources a { color: var(--brand); word-break: break-all; }
+    .disclaimer { margin-top: 30px; border-top: 1px solid var(--line); padding-top: 18px; color: var(--muted); font-size: 0.8rem; }
+    @media (max-width: 640px) {
+      .cover { padding: 30px 22px; border-radius: 0; }
+      .page { padding: 0 0 32px; }
+      .card { border-radius: 0; border-left: 0; border-right: 0; }
+      th, td { padding: 7px; }
+    }
+    @media print {
+      body { background: #fff; }
+      .page { max-width: none; padding: 0; }
+      .cover { box-shadow: none; border-radius: 0; }
+      .card { box-shadow: none; break-inside: avoid; }
+      section { break-inside: avoid; }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <header class="cover">
+      <div class="eyebrow">Executive Startup Roadmap</div>
+      <h1>{{ roadmap.venture_name }}</h1>
+      <p>{{ roadmap.idea_analysis.refined_value_proposition }}</p>
+      <div class="meta">
+        <span class="pill">{{ roadmap.founder_input.target_market }}</span>
+        <span class="pill">{{ roadmap.founder_input.target_geography }}</span>
+        <span class="pill">Budget {{ money.summary_budget }}</span>
+        <span class="pill">{{ roadmap.founder_input.timeline_months }}-month plan</span>
+        <span class="pill confidence">Overall confidence {{ confidence_pct }}%</span>
+      </div>
+    </header>
+
+    <section class="card summary">
+      <h2>Executive Summary</h2>
+      <p>{{ roadmap.executive_summary }}</p>
+      <div class="grid three" style="margin-top:18px">
+        <div class="stat"><strong>{{ confidence_pct }}%</strong><span>Composite confidence</span></div>
+        <div class="stat"><strong>{{ money.som }}</strong><span>Serviceable obtainable market</span></div>
+        <div class="stat"><strong>{{ money.moderate_arr }}</strong><span>Moderate annualized Month 12</span></div>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>Strategy Snapshot</h2>
+      <div class="grid two">
+        <div>
+          <h3>Target Customer</h3>
+          <ul>{% for user in roadmap.idea_analysis.target_users %}<li>{{ user }}</li>{% else %}<li>Target segment not specified.</li>{% endfor %}</ul>
+        </div>
+        <div>
+          <h3>Priority GTM Channels</h3>
+          <ul>{% for channel in roadmap.marketing_plan.priority_channels %}<li>{{ channel }}</li>{% else %}<li>Founder-led outreach.</li>{% endfor %}</ul>
+        </div>
+        <div>
+          <h3>Pricing Strategy</h3>
+          <p>{{ roadmap.revenue_estimation.pricing_strategy }}</p>
+        </div>
+        <div>
+          <h3>Positioning</h3>
+          <p>{{ roadmap.marketing_plan.positioning_statement }}</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>Business Model Canvas</h2>
+      <div class="bmc">
+        {% for block in bmc_blocks %}
+        <div class="block">
+          <h3>{{ block.title }}</h3>
+          <ul>{% for item in block.entries %}<li>{{ item }}</li>{% else %}<li class="muted">Not provided</li>{% endfor %}</ul>
+        </div>
+        {% endfor %}
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>Competitor Landscape</h2>
+      {% if roadmap.market_research.competitor_landscape %}
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Competitor</th><th>Description</th><th>Strengths</th><th>Weaknesses</th></tr></thead>
+          <tbody>
+            {% for competitor in roadmap.market_research.competitor_landscape %}
+            <tr>
+              <td><strong>{{ competitor.name }}</strong></td>
+              <td>{{ competitor.description }}</td>
+              <td>{{ competitor.strengths | join(", ") or "-" }}</td>
+              <td>{{ competitor.weaknesses | join(", ") or "-" }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <p class="muted">No direct competitors were identified in the research output.</p>
+      {% endif %}
+      {% if roadmap.market_research.source_urls %}
+      <h3 style="margin-top:18px">Supporting Sources</h3>
+      <ul class="sources">
+        {% for source in roadmap.market_research.source_urls %}<li><a href="{{ source }}" rel="noreferrer noopener" target="_blank">{{ source }}</a></li>{% endfor %}
+      </ul>
+      {% endif %}
+    </section>
+
+    <section class="card">
+      <h2>12-Month Financial Projections</h2>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Scenario</th><th>Month 12 revenue</th><th>Customers</th><th>Break-even</th><th>Ending runway</th></tr></thead>
+          <tbody>
+            {% for scenario in roadmap.revenue_estimation.scenarios %}
+            <tr>
+              <td><strong>{{ scenario.scenario_name | title }}</strong></td>
+              <td>{{ money.scenarios[loop.index0] }}</td>
+              <td>{{ "{:,}".format(scenario.month_12_customers) }}</td>
+              <td>{% if scenario.break_even_month %}Month {{ scenario.break_even_month }}{% else %}Not reached{% endif %}</td>
+              <td>{% if scenario.ending_runway_months is not none %}{{ "%.1f" | format(scenario.ending_runway_months) }} mo{% else %}-{% endif %}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% if roadmap.revenue_estimation.unit_economics %}
+      {% set unit = roadmap.revenue_estimation.unit_economics %}
+      <div class="grid three" style="margin-top:16px">
+        <div class="stat"><strong>{{ money.unit_cac }}</strong><span>Target CAC</span></div>
+        <div class="stat"><strong>{{ money.unit_ltv }}</strong><span>Estimated LTV</span></div>
+        <div class="stat"><strong>{{ "%.1f" | format(unit.ltv_cac_ratio) }}x</strong><span>LTV : CAC</span></div>
+      </div>
+      {% endif %}
+      {% if roadmap.revenue_estimation.invariant_violations %}
+      <div class="warning" style="margin-top:16px">
+        <strong>Model warnings</strong>
+        <ul>{% for warning in roadmap.revenue_estimation.invariant_violations %}<li>{{ warning }}</li>{% endfor %}</ul>
+      </div>
+      {% endif %}
+    </section>
+
+    <section>
+      <h2 style="margin-left:6px">Execution Roadmap</h2>
+      <div class="grid two">
+        {% for phase in roadmap.execution_phases %}
+        <article class="card phase">
+          <div class="weeks">Phase {{ phase.phase_number }} - {{ phase.duration_weeks }} weeks</div>
+          <h2 style="font-size:1.2rem;margin-top:6px">{{ phase.name }}</h2>
+          <p class="muted">{{ phase.focus }}</p>
+          <h3>Key Milestones</h3>
+          <ul>{% for milestone in phase.key_milestones %}<li>{{ milestone }}</li>{% else %}<li>Milestone detail pending.</li>{% endfor %}</ul>
+          <h3 style="margin-top:14px">Success Metrics</h3>
+          <ul>{% for metric in phase.success_metrics %}<li>{{ metric }}</li>{% else %}<li>Define a measurable exit criterion.</li>{% endfor %}</ul>
+        </article>
+        {% endfor %}
+      </div>
+    </section>
+
+    <section>
+      <h2 style="margin-left:6px">Top Cross-Functional Risks</h2>
+      <div class="grid two">
+        {% for risk in roadmap.top_risks %}
+        <article class="card risk">
+          <span class="tag">{{ risk.category }} | {{ risk.likelihood }} likelihood | {{ risk.impact }} impact</span>
+          <h3 style="color:#9a3412">{{ risk.risk }}</h3>
+          <p><strong>Mitigation:</strong> {{ risk.mitigation }}</p>
+        </article>
+        {% else %}
+        <p class="muted">No risks were recorded.</p>
+        {% endfor %}
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>90-Day GTM Milestone Calendar</h2>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Week</th><th>Focus</th><th>Target KPI</th><th>Deliverables</th></tr></thead>
+          <tbody>
+            {% for milestone in roadmap.marketing_plan.gtm_90_day_plan %}
+            <tr>
+              <td><strong>{% if milestone.week %}W{{ milestone.week }}{% else %}M{{ milestone.month }}{% endif %}</strong></td>
+              <td>{{ milestone.focus }}</td>
+              <td>{{ milestone.target_kpi }}</td>
+              <td>{{ milestone.deliverables | join("; ") or "-" }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>Prioritized Next Actions</h2>
+      <ol>{% for action in roadmap.marketing_plan.prioritized_next_actions %}<li>{{ action }}</li>{% else %}<li>Define the first validation experiment.</li>{% endfor %}</ol>
+    </section>
+
+    <footer class="disclaimer">
+      <p>{{ roadmap.disclaimer }}</p>
+      <p>Generated {{ generated_at }} by AI Co-Founder.</p>
+    </footer>
+  </main>
+</body>
+</html>

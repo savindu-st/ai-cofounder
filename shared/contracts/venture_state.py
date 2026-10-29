@@ -33,3 +33,5 @@ class VentureState(TimestampedContract):
     warnings: List[str] = Field(default_factory=list)
     human_review_required: bool = False
     human_review_notes: Optional[str] = None
+    human_review_action: Optional[str] = None
+    replan_target: Optional[str] = None

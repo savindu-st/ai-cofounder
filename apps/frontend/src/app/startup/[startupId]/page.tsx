@@ -198,7 +198,7 @@ export default function StartupMissionControl({ params }: { params: { startupId:
       )}
 
       {/* 3. Tabbed Results Display */}
-      <AgentResultsView venture={venture} currentStage={currentStage} />
+      <AgentResultsView venture={venture} currentStage={currentStage} isLoading={isLoading} />
     </div>
   );
 }

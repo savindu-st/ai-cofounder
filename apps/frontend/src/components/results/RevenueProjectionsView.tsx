@@ -1,8 +1,9 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { RevenueEstimationOutput } from '../../types/venture';
-import { TrendingUp, DollarSign, Calendar, Users, CheckCircle } from 'lucide-react';
+import { ScenarioChart } from './ScenarioChart';
+import { TrendingUp, DollarSign, Calendar, Users, CheckCircle, AlertTriangle, Gauge } from 'lucide-react';
 
 interface Props {
   data?: RevenueEstimationOutput | null;
@@ -10,6 +11,22 @@ interface Props {
 
 export const RevenueProjectionsView: React.FC<Props> = ({ data }) => {
   const [selectedScenarioIdx, setSelectedScenarioIdx] = useState(0);
+  const initializedScenarioRef = useRef(false);
+
+  useEffect(() => {
+    const scenarioList = data?.scenarios ?? [];
+    if (!initializedScenarioRef.current && scenarioList.length > 0) {
+      const moderateIndex = scenarioList.findIndex(
+        (scenario) => scenario.scenario_name.toLowerCase() === 'moderate',
+      );
+      setSelectedScenarioIdx(moderateIndex >= 0 ? moderateIndex : 0);
+      initializedScenarioRef.current = true;
+      return;
+    }
+    if (scenarioList.length > 0 && selectedScenarioIdx >= scenarioList.length) {
+      setSelectedScenarioIdx(0);
+    }
+  }, [data, selectedScenarioIdx]);
 
   if (!data) {
     return (
@@ -21,8 +38,14 @@ export const RevenueProjectionsView: React.FC<Props> = ({ data }) => {
     );
   }
 
-  const { parameters, scenarios, pricing_strategy, assumptions_summary } = data;
+  const { parameters, scenarios, pricing_strategy, assumptions_summary, unit_economics, invariant_violations } = data;
   const activeScenario = scenarios && scenarios[selectedScenarioIdx] ? scenarios[selectedScenarioIdx] : null;
+  const runwayMonths = activeScenario?.ending_runway_months;
+  const runwayLabel = runwayMonths === undefined || runwayMonths === null
+    ? '—'
+    : runwayMonths >= 999
+      ? 'Cash-flow positive'
+      : `${runwayMonths.toFixed(1)} mo`;
 
   return (
     <div>
@@ -81,6 +104,58 @@ export const RevenueProjectionsView: React.FC<Props> = ({ data }) => {
         </div>
       )}
 
+      {/* Unit Economics & Scenario Health */}
+      <div className="content-section" style={{ marginTop: '24px' }}>
+        <div className="section-title">
+          <Gauge size={18} color="#a855f7" />
+          <span>Unit Economics & Scenario Health</span>
+        </div>
+        <div className="unit-econ-grid">
+          <div className="unit-econ-card">
+            <div className="unit-econ-label">Customer Acquisition Cost</div>
+            <div className="unit-econ-value" style={{ color: '#f59e0b' }}>
+              {unit_economics ? `$${Math.round(unit_economics.cac).toLocaleString()}` : '—'}
+            </div>
+            <div className="unit-econ-note">Blended cost to acquire one paying customer</div>
+          </div>
+          <div className="unit-econ-card">
+            <div className="unit-econ-label">Customer Lifetime Value</div>
+            <div className="unit-econ-value" style={{ color: '#38bdf8' }}>
+              {unit_economics ? `$${Math.round(unit_economics.ltv).toLocaleString()}` : '—'}
+            </div>
+            <div className="unit-econ-note">Expected gross value over the customer lifecycle</div>
+          </div>
+          <div className="unit-econ-card">
+            <div className="unit-econ-label">LTV : CAC</div>
+            <div className="unit-econ-value" style={{ color: unit_economics && unit_economics.ltv_cac_ratio >= 3 ? '#10b981' : '#f87171' }}>
+              {unit_economics ? `${unit_economics.ltv_cac_ratio.toFixed(1)}x` : '—'}
+            </div>
+            <div className="unit-econ-note">Healthy target is at least 3.0x</div>
+          </div>
+          <div className="unit-econ-card">
+            <div className="unit-econ-label">CAC Payback</div>
+            <div className="unit-econ-value" style={{ color: '#a855f7' }}>
+              {unit_economics ? `${unit_economics.cac_payback_months.toFixed(1)} mo` : '—'}
+            </div>
+            <div className="unit-econ-note">Months to recover acquisition cost</div>
+          </div>
+          <div className="unit-econ-card">
+            <div className="unit-econ-label">Active Scenario Runway</div>
+            <div className="unit-econ-value" style={{ color: '#34d399' }}>
+              {runwayLabel}
+            </div>
+            <div className="unit-econ-note">Based on the selected projection scenario</div>
+          </div>
+          <div className="unit-econ-card">
+            <div className="unit-econ-label">Break-Even</div>
+            <div className="unit-econ-value" style={{ color: activeScenario?.break_even_month ? '#10b981' : '#f59e0b' }}>
+              {activeScenario?.break_even_month ? `Month ${activeScenario.break_even_month}` : 'Not reached'}
+            </div>
+            <div className="unit-econ-note">First month with non-positive net burn</div>
+          </div>
+        </div>
+      </div>
+
       {/* Scenarios Header & Selector */}
       {scenarios && scenarios.length > 0 && (
         <div className="content-section" style={{ marginTop: '24px' }}>
@@ -121,6 +196,12 @@ export const RevenueProjectionsView: React.FC<Props> = ({ data }) => {
             })}
           </div>
 
+          <ScenarioChart
+            scenarios={scenarios}
+            selectedIndex={selectedScenarioIdx}
+            onSelect={setSelectedScenarioIdx}
+          />
+
           {/* Monthly Table for Active Scenario */}
           {activeScenario && activeScenario.monthly_projections && activeScenario.monthly_projections.length > 0 && (
             <div style={{ marginTop: '20px', overflowX: 'auto' }}>
@@ -137,27 +218,46 @@ export const RevenueProjectionsView: React.FC<Props> = ({ data }) => {
                   </tr>
                 </thead>
                 <tbody>
-                  {activeScenario.monthly_projections.map((row: any, idx: number) => (
-                    <tr key={idx} style={{ borderBottom: '1px solid var(--border-subtle)' }}>
-                      <td style={{ padding: '8px 12px' }}>Month {row.month || idx + 1}</td>
-                      <td style={{ padding: '8px 12px' }}>{row.customers || row.users || '—'}</td>
-                      <td style={{ padding: '8px 12px', color: '#34d399' }}>
-                        {row.revenue ? `$${Math.round(row.revenue).toLocaleString()}` : '—'}
-                      </td>
-                      <td
-                        style={{
-                          padding: '8px 12px',
-                          color: (row.net_profit ?? row.profit ?? 0) >= 0 ? '#10b981' : '#f87171',
-                        }}
-                      >
-                        {row.net_profit !== undefined ? `$${Math.round(row.net_profit).toLocaleString()}` : '—'}
-                      </td>
-                    </tr>
-                  ))}
+                  {activeScenario.monthly_projections.map((row: any, idx: number) => {
+                    const netProfit = typeof row.net_burn === 'number'
+                      ? -row.net_burn
+                      : row.net_profit ?? row.profit;
+                    return (
+                      <tr key={idx} style={{ borderBottom: '1px solid var(--border-subtle)' }}>
+                        <td style={{ padding: '8px 12px' }}>Month {row.month || idx + 1}</td>
+                        <td style={{ padding: '8px 12px' }}>{row.customers || row.users || '—'}</td>
+                        <td style={{ padding: '8px 12px', color: '#34d399' }}>
+                          {row.revenue ? `$${Math.round(row.revenue).toLocaleString()}` : '—'}
+                        </td>
+                        <td
+                          style={{
+                            padding: '8px 12px',
+                            color: (netProfit ?? 0) >= 0 ? '#10b981' : '#f87171',
+                          }}
+                        >
+                          {netProfit !== undefined ? `$${Math.round(netProfit).toLocaleString()}` : '—'}
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
           )}
+        </div>
+      )}
+
+      {invariant_violations && invariant_violations.length > 0 && (
+        <div className="invariant-warning" style={{ marginTop: '24px' }}>
+          <h5>
+            <AlertTriangle size={16} />
+            <span>Financial Model Warnings</span>
+          </h5>
+          <ul>
+            {invariant_violations.map((violation, idx) => (
+              <li key={idx} style={{ marginBottom: '4px' }}>{violation}</li>
+            ))}
+          </ul>
         </div>
       )}
 

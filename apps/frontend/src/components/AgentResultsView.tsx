@@ -22,6 +22,7 @@ import {
 interface AgentResultsViewProps {
   venture: VentureState | null;
   currentStage: WorkflowStage;
+  isLoading?: boolean;
 }
 
 type TabKey = 'idea' | 'market' | 'canvas' | 'finance' | 'marketing' | 'roadmap';
@@ -35,7 +36,7 @@ interface TabDef {
   isRunning: (stage: WorkflowStage) => boolean;
 }
 
-export const AgentResultsView: React.FC<AgentResultsViewProps> = ({ venture, currentStage }) => {
+export const AgentResultsView: React.FC<AgentResultsViewProps> = ({ venture, currentStage, isLoading = false }) => {
   const [activeTab, setActiveTab] = useState<TabKey>('idea');
   const prevStageRef = useRef<WorkflowStage>(currentStage);
 
@@ -147,17 +148,27 @@ export const AgentResultsView: React.FC<AgentResultsViewProps> = ({ venture, cur
 
       {/* Tab Content */}
       <div className="tab-content">
-        {activeTab === 'idea' && <IdeaAnalysisView data={venture?.idea_analysis} />}
-        {activeTab === 'market' && (
-          <MarketResearchView
-            marketData={venture?.market_research}
-            criticData={venture?.market_validation}
-          />
+        {isLoading && !venture ? (
+          <div className="results-loading">
+            <Loader2 size={28} className="spin" color="#818cf8" />
+            <h4>Loading venture state...</h4>
+            <p>Hydrating the latest agent outputs from the orchestrator.</p>
+          </div>
+        ) : (
+          <>
+            {activeTab === 'idea' && <IdeaAnalysisView data={venture?.idea_analysis} />}
+            {activeTab === 'market' && (
+              <MarketResearchView
+                marketData={venture?.market_research}
+                criticData={venture?.market_validation}
+              />
+            )}
+            {activeTab === 'canvas' && <BusinessModelView data={venture?.business_model} />}
+            {activeTab === 'finance' && <RevenueProjectionsView data={venture?.revenue_estimation} />}
+            {activeTab === 'marketing' && <MarketingPlanView data={venture?.marketing_plan} />}
+            {activeTab === 'roadmap' && <RoadmapView data={venture?.final_roadmap} />}
+          </>
         )}
-        {activeTab === 'canvas' && <BusinessModelView data={venture?.business_model} />}
-        {activeTab === 'finance' && <RevenueProjectionsView data={venture?.revenue_estimation} />}
-        {activeTab === 'marketing' && <MarketingPlanView data={venture?.marketing_plan} />}
-        {activeTab === 'roadmap' && <RoadmapView data={venture?.final_roadmap} />}
       </div>
     </div>
   );
